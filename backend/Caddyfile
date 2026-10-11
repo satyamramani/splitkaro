@@ -8,5 +8,5 @@
 
 # Change to your domain (e.g., api.yourdomain.com)
 :80 {
-    reverse_proxy pocketbase:8090
+    reverse_proxy pocketbase:18090
 }

@@ -21,8 +21,8 @@ cd splitkaro/backend
 docker compose up -d --build
 ```
 
-- **PocketBase Admin Dashboard:** `http://YOUR_SERVER_IP:8090/_/`
-- **REST API:** `http://YOUR_SERVER_IP:8090/api/`
+- **PocketBase Admin Dashboard:** `http://YOUR_SERVER_IP:18090/_/`
+- **REST API:** `http://YOUR_SERVER_IP:18090/api/`
 
 ---
 
@@ -34,7 +34,7 @@ To connect your phone app securely:
 2. Edit `Caddyfile` on the server:
    ```caddy
    api.splitkaro.com {
-       reverse_proxy pocketbase:8090
+       reverse_proxy pocketbase:18090
    }
    ```
 3. Edit `docker-compose.yml` to uncomment the `caddy` service and volumes.

@@ -17,9 +17,9 @@ A modern expense-splitting and debt-simplification app built with **Flutter** (f
 ### 1. Backend (PocketBase)
 ```bash
 cd backend
-./pocketbase serve --http="127.0.0.1:8090"
+./pocketbase serve --http="127.0.0.1:18090"
 ```
-The PocketBase admin dashboard will be available at `http://127.0.0.1:8090/_/`.
+The PocketBase admin dashboard will be available at `http://127.0.0.1:18090/_/`.
 
 ### 2. Frontend (Flutter)
 ```bash
