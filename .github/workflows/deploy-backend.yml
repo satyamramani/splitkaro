@@ -1,0 +1,51 @@
+name: Build and Deploy PocketBase Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  deploy:
+    name: Deploy Backend via Docker Compose
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Sync Files to /opt/splitkaro
+        run: |
+          echo "Preparing /opt/splitkaro directory..."
+          sudo mkdir -p /opt/splitkaro/pb_data /opt/splitkaro/pb_migrations
+          sudo chown -R $USER:$USER /opt/splitkaro
+
+          echo "Copying deployment configs..."
+          cp backend/Dockerfile /opt/splitkaro/
+          cp backend/docker-compose.yml /opt/splitkaro/
+
+          # Copy Caddyfile if not already present on server (preserves customized server domains)
+          if [ ! -f /opt/splitkaro/Caddyfile ]; then
+            cp backend/Caddyfile /opt/splitkaro/
+          fi
+
+          echo "Syncing database migrations..."
+          cp -r backend/pb_migrations/* /opt/splitkaro/pb_migrations/ 2>/dev/null || true
+
+      - name: Build and Restart PocketBase
+        run: |
+          cd /opt/splitkaro
+          echo "Building and restarting containers..."
+          docker compose up -d --build --remove-orphans
+
+      - name: Verify Service Health
+        run: |
+          cd /opt/splitkaro
+          sleep 3
+          docker compose ps
+          echo "Recent PocketBase logs:"
+          docker compose logs --tail=25 pocketbase
