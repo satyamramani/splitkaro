@@ -1,0 +1,60 @@
+# Flutter SDK directory in workspace root
+/flutter/
+
+# PocketBase backend binaries & data
+backend/pocketbase
+backend/pocketbase.exe
+backend/pb_data/
+backend/pb_data/*
+!backend/pb_data/.gitkeep
+
+# Flutter / Dart build artifacts & cache
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/build/
+**/doc/api/
+/coverage/
+.widget_preview/
+
+# iOS / macOS build files
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/.symlinks/
+**/ios/Pods/
+**/ios/Podfile.lock
+
+# Android build artifacts
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+**/.gradle/
+**/local.properties
+
+# Symbolication & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# IDE & Editor files
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Logs & scratch
+*.log
+**/scratch/
