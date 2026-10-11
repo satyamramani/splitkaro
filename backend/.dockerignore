@@ -1,0 +1,5 @@
+pocketbase
+pocketbase.exe
+pb_data/
+*.log
+.DS_Store

@@ -1,0 +1,12 @@
+# Replace with your actual domain name for automatic HTTPS in production
+# Example: api.splitkaro.com
+# For local testing, you can use: localhost
+
+{
+    email admin@example.com
+}
+
+# Change to your domain (e.g., api.yourdomain.com)
+:80 {
+    reverse_proxy pocketbase:8090
+}

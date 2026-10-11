@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: splitkaro_pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_migrations:/pb/pb_migrations
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Optional Caddy reverse proxy for automatic HTTPS with Let's Encrypt
+  # To use with your domain on a cloud VPS:
+  # 1. Update backend/Caddyfile with your domain (e.g. api.yourdomain.com)
+  # 2. Uncomment the caddy service below
+  #
+  # caddy:
+  #   image: caddy:alpine
+  #   container_name: splitkaro_caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   depends_on:
+  #     - pocketbase
+
+# volumes:
+#   caddy_data:
+#   caddy_config:
