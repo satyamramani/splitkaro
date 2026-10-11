@@ -44,12 +44,31 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response is Map<String, dynamic>) {
         final data = response['data'];
         if (data is Map<String, dynamic> && data.isNotEmpty) {
-          final firstKey = data.keys.first;
-          final firstError = data[firstKey]['message'];
-          return '$firstKey: $firstError';
+          final List<String> errorMessages = [];
+          data.forEach((field, err) {
+            String msg = '';
+            if (err is Map<String, dynamic>) {
+              msg = err['message']?.toString() ?? '';
+            } else {
+              msg = err.toString();
+            }
+            if (msg.isNotEmpty) {
+              final capitalizedField = field.isNotEmpty 
+                  ? field.substring(0, 1).toUpperCase() + field.substring(1) 
+                  : field;
+              errorMessages.add('$capitalizedField: $msg');
+            }
+          });
+          if (errorMessages.isNotEmpty) {
+            return errorMessages.join('\n');
+          }
         }
-        return response['message']?.toString() ?? e.toString();
+        final msg = response['message']?.toString();
+        if (msg != null && msg.isNotEmpty) {
+          return msg;
+        }
       }
+      return e.toString();
     }
     return e.toString();
   }
