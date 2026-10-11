@@ -1,50 +1,71 @@
-# PocketBase Backend Deployment
+# PocketBase Backend Deployment (Git Clone Approach)
 
-This directory contains the containerized setup for the PocketBase backend.
-
-## Prerequisites
-- Docker & Docker Compose installed on your server (or local machine).
+This guide covers deploying the PocketBase backend using **Git Clone + Docker Compose** on your Linux server.
 
 ---
 
-## 1. Local Development with Docker
+## 1. Initial Setup on Server
 
-Run PocketBase in the background:
+SSH into your server and run:
+
 ```bash
+# 1. Clone the repository
+git clone git@github.com:satyamramani/splitkaro.git
+cd splitkaro/backend
+
+# 2. (Optional) If you want to copy your existing local data from your Mac:
+# Run this from your MAC terminal:
+# rsync -avz /Users/satyamramani/Workspace/Split/backend/pb_data/ user@YOUR_SERVER_IP:~/splitkaro/backend/pb_data/
+
+# 3. Start PocketBase with Docker Compose
 docker compose up -d --build
 ```
 
-- **API Endpoint:** `http://localhost:8090/api/`
-- **Admin Dashboard:** `http://localhost:8090/_/`
-- **View Logs:** `docker compose logs -f`
-- **Stop:** `docker compose down`
-
-Database data is automatically persisted in `./pb_data/`.
+- **PocketBase Admin Dashboard:** `http://YOUR_SERVER_IP:8090/_/`
+- **REST API:** `http://YOUR_SERVER_IP:8090/api/`
 
 ---
 
-## 2. Deploying on a Cloud Server (VPS) with Automatic HTTPS
+## 2. (Recommended) Enable Automatic HTTPS / Domain with Caddy
 
-PocketBase is configured to easily work with **Caddy** for free, automatic SSL certificates.
+To connect your phone app securely:
 
-### Step 1: Copy `backend` to your server
+1. Point your domain DNS **A record** (e.g. `api.splitkaro.com`) to your server IP.
+2. Edit `Caddyfile` on the server:
+   ```caddy
+   api.splitkaro.com {
+       reverse_proxy pocketbase:8090
+   }
+   ```
+3. Edit `docker-compose.yml` to uncomment the `caddy` service and volumes.
+4. Restart containers:
+   ```bash
+   docker compose up -d --build
+   ```
+Caddy will automatically provision and renew a free Let's Encrypt SSL certificate!
+
+---
+
+## 3. How to Update in the Future
+
+Whenever you make backend or migration changes on your laptop and push to GitHub, update the server with 2 commands:
+
 ```bash
-rsync -avz backend/ user@YOUR_SERVER_IP:/var/www/splitkaro-backend/
-```
-
-### Step 2: Configure your domain
-1. Point your domain DNS (e.g. `api.splitkaro.com`) to your server IP via an **A record**.
-2. Open `Caddyfile` and replace `:80` with your domain:
-```caddy
-api.splitkaro.com {
-    reverse_proxy pocketbase:8090
-}
-```
-3. Open `docker-compose.yml` and uncomment the `caddy` service and volumes.
-
-### Step 3: Start on the server
-```bash
+cd ~/splitkaro
+git pull origin main
+cd backend
 docker compose up -d --build
 ```
 
-Caddy will automatically generate a Let's Encrypt SSL certificate and proxy all HTTPS traffic to PocketBase.
+Docker will rebuild the container, run any new migrations from `pb_migrations/`, and restart the service without losing any database records in `pb_data/`.
+
+---
+
+## Useful Commands
+
+| Task | Command |
+|---|---|
+| View live logs | `docker compose logs -f pocketbase` |
+| Check status | `docker compose ps` |
+| Stop service | `docker compose down` |
+| Restart | `docker compose restart` |
