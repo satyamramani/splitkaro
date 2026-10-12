@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  pocketbase:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: splitkaro_pocketbase
+    restart: unless-stopped
+    ports:
+      - "18090:18090"
+    volumes:
+      - ./backend/pb_data:/pb/pb_data
+      - ./backend/pb_migrations:/pb/pb_migrations
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:18090/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - PB_URL=https://pocket.chai-tea.duckdns.org
+    container_name: splitkaro_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - pocketbase
