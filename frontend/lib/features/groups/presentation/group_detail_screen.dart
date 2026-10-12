@@ -43,12 +43,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final currentUserName = currentUser.name;
 
     bool isMe(String name) {
-      final n = name.trim().toLowerCase();
-      return n == currentUserName.toLowerCase() || 
-             n == 'you' || 
-             n == 'satyam' ||
-             (currentUser.email.isNotEmpty && n == currentUser.email.toLowerCase()) ||
-             n == currentUser.id.toLowerCase();
+      return currentUser.isMe(name);
     }
 
     final allExpenses = ref.watch(expenseProvider).expenses;

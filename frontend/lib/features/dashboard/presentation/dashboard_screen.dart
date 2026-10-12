@@ -40,39 +40,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final currentUserName = currentUser.name;
 
     bool isMe(String name) {
-      final n = name.trim().toLowerCase();
-      return n == currentUserName.toLowerCase() || 
-             n == 'you' || 
-             n == 'satyam' ||
-             (currentUser.email.isNotEmpty && n == currentUser.email.toLowerCase()) ||
-             n == currentUser.id.toLowerCase();
+      return currentUser.isMe(name);
     }
+
+    // 0. Isolate expenses so each user only sees their own expenses or groups they belong to
+    final userInvolvedExpenses = expenses.where((exp) {
+      final isPayer = isMe(exp.payer);
+      final isParticipant = exp.splitOwed.keys.any((person) => isMe(person));
+      final isGroupMember = exp.group.isNotEmpty && 
+          groups.any((g) => g.name == exp.group && g.members.any((m) => isMe(m)));
+      return isPayer || isParticipant || isGroupMember;
+    }).toList();
 
     // 1. Group-filtered scope of expenses
     final List<Expense> scopeExpenses;
     if (_selectedGroupFilter == null) {
-      scopeExpenses = expenses;
+      scopeExpenses = userInvolvedExpenses;
     } else if (_selectedGroupFilter == '__direct__') {
-      scopeExpenses = expenses.where((exp) => exp.group.isEmpty).toList();
+      scopeExpenses = userInvolvedExpenses.where((exp) => exp.group.isEmpty).toList();
     } else {
-      scopeExpenses = expenses.where((exp) => exp.group == _selectedGroupFilter).toList();
+      scopeExpenses = userInvolvedExpenses.where((exp) => exp.group == _selectedGroupFilter).toList();
     }
 
-    // 2. Debts for this specific group scope
+    // 2. Debts for this specific group / user scope
     final List<Debt> activeSimplifiedDebts;
-    if (_selectedGroupFilter == null) {
-      activeSimplifiedDebts = simplifiedDebts;
-    } else {
-      final List<Debt> scopeRawDebts = [];
-      for (final exp in scopeExpenses) {
-        exp.splitOwed.forEach((person, amountOwed) {
-          if (person != exp.payer && amountOwed > 0) {
-            scopeRawDebts.add(Debt(person, exp.payer, amountOwed));
-          }
-        });
-      }
-      activeSimplifiedDebts = DebtSimplifier.simplifyDebts(scopeRawDebts);
+    final List<Debt> scopeRawDebts = [];
+    for (final exp in scopeExpenses) {
+      exp.splitOwed.forEach((person, amountOwed) {
+        if (person != exp.payer && amountOwed > 0) {
+          scopeRawDebts.add(Debt(person, exp.payer, amountOwed));
+        }
+      });
     }
+    activeSimplifiedDebts = DebtSimplifier.simplifyDebts(scopeRawDebts);
 
     // 3. Category spending & totals calculation on scopeExpenses
     final Map<String, double> categoryTotals = {};

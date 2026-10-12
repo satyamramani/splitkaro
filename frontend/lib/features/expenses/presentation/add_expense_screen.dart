@@ -101,7 +101,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
 
   void _syncParticipants(List<String> userNames, String currentUserName, List<Group> groups) {
     if (_payerName == null || !userNames.contains(_payerName)) {
-      _payerName = userNames.contains(currentUserName) ? currentUserName : (userNames.isNotEmpty ? userNames.first : 'You');
+      _payerName = userNames.contains(currentUserName) ? currentUserName : (userNames.isNotEmpty ? userNames.first : currentUserName);
     }
     if (_selectedParticipants.isEmpty) {
       if (_selectedGroupName != null) {

@@ -12,22 +12,15 @@ final currentUserProvider = Provider<AppUser>((ref) {
     final rawEmail = model.getStringValue('email');
     return AppUser(
       id: model.id,
-      name: rawName.isNotEmpty ? rawName : (rawEmail.isNotEmpty ? rawEmail.split('@').first : 'Satyam'),
+      name: rawName.isNotEmpty ? rawName : (rawEmail.isNotEmpty ? rawEmail.split('@').first : 'User'),
       email: rawEmail,
     );
   }
 
-  // Fallback to Satyam so data is always immediately linked and displayed
-  final usersState = ref.watch(usersProvider);
-  final satyamUsers = usersState.users.where((u) => u.name.toLowerCase() == 'satyam');
-  if (satyamUsers.isNotEmpty) {
-    return satyamUsers.first;
-  }
-
   return AppUser(
-    id: '13ro5aqn0iy657t',
-    name: 'Satyam',
-    email: 'satyamramani58554@gmail.com',
+    id: '',
+    name: 'User',
+    email: '',
   );
 });
 
@@ -80,14 +73,51 @@ class UsersNotifier extends Notifier<UsersState> {
   }
 
   Future<AppUser?> addUser(String name, [String? email]) async {
+    final cleanName = name.trim();
+    final cleanEmail = email?.trim().toLowerCase();
+
+    // 1. Check if user already exists in current state
+    final existingLocal = state.users.where((u) {
+      if (cleanEmail != null && cleanEmail.isNotEmpty && u.email.toLowerCase() == cleanEmail) {
+        return true;
+      }
+      return u.name.toLowerCase() == cleanName.toLowerCase();
+    }).toList();
+
+    if (existingLocal.isNotEmpty) {
+      return existingLocal.first;
+    }
+
+    // 2. Query PocketBase to see if user exists by email or name
     try {
-      final sanitized = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      final userEmail = email != null && email.isNotEmpty 
-          ? email 
+      String filter = 'name = "$cleanName"';
+      if (cleanEmail != null && cleanEmail.isNotEmpty) {
+        filter = 'email = "$cleanEmail" || name = "$cleanName"';
+      }
+      final searchResult = await pb.collection('users').getList(filter: filter);
+      if (searchResult.items.isNotEmpty) {
+        final record = searchResult.items.first;
+        final rawName = record.getStringValue('name');
+        final rawEmail = record.getStringValue('email');
+        final existingUser = AppUser(
+          id: record.id,
+          name: rawName.isNotEmpty ? rawName : (rawEmail.isNotEmpty ? rawEmail.split('@').first : cleanName),
+          email: rawEmail,
+        );
+        state = state.copyWith(users: [...state.users, existingUser]);
+        return existingUser;
+      }
+    } catch (_) {}
+
+    // 3. Otherwise, create a placeholder user in PocketBase
+    try {
+      final sanitized = cleanName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      final userEmail = cleanEmail != null && cleanEmail.isNotEmpty 
+          ? cleanEmail 
           : '$sanitized${DateTime.now().millisecondsSinceEpoch % 10000}@example.com';
       
       final record = await pb.collection('users').create(body: {
-        'name': name,
+        'name': cleanName,
         'email': userEmail,
         'password': 'password123',
         'passwordConfirm': 'password123',
@@ -95,7 +125,7 @@ class UsersNotifier extends Notifier<UsersState> {
 
       final newUser = AppUser(
         id: record.id,
-        name: name,
+        name: cleanName,
         email: userEmail,
       );
 

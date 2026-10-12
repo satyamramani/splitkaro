@@ -11,18 +11,36 @@ class FriendsScreen extends ConsumerWidget {
 
   Future<void> _showAddFriendDialog(BuildContext context, WidgetRef ref) async {
     final nameController = TextEditingController();
-    final name = await showDialog<String>(
+    final emailController = TextEditingController();
+
+    final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Add Friend', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: nameController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Friend\'s name',
-            hintText: 'e.g. Charlie',
-          ),
-          textCapitalization: TextCapitalization.words,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Friend\'s name',
+                hintText: 'e.g. Alex or Satyam',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email address (optional)',
+                hintText: 'e.g. alex@example.com',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -31,20 +49,30 @@ class FriendsScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () {
-              final text = nameController.text.trim();
-              if (text.isNotEmpty) Navigator.pop(ctx, text);
+              final name = nameController.text.trim();
+              final email = emailController.text.trim();
+              if (name.isNotEmpty) {
+                Navigator.pop(ctx, {'name': name, 'email': email});
+              }
             },
-            child: const Text('Add'),
+            child: const Text('Add Friend'),
           ),
         ],
       ),
     );
 
-    if (name != null && name.isNotEmpty) {
-      final newUser = await ref.read(usersProvider.notifier).addUser(name);
+    if (result != null && result['name'] != null && result['name']!.isNotEmpty) {
+      final newUser = await ref.read(usersProvider.notifier).addUser(
+        result['name']!, 
+        result['email'],
+      );
       if (context.mounted && newUser != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added ${newUser.name} to friends!'), backgroundColor: AppTheme.secondaryColor),
+          SnackBar(
+            content: Text('Added ${newUser.name} to friends! You can now split expenses with them.'), 
+            backgroundColor: AppTheme.secondaryColor,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -58,8 +86,7 @@ class FriendsScreen extends ConsumerWidget {
     final debts = ref.watch(simplifiedDebtsProvider);
 
     bool isMe(String name) {
-      final n = name.trim().toLowerCase();
-      return n == currentUserName.toLowerCase() || n == 'you' || n == 'satyam';
+      return currentUser.isMe(name);
     }
 
     final friends = usersState.users.where((u) => !isMe(u.name)).toList();

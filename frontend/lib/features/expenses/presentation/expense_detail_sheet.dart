@@ -28,9 +28,7 @@ class ExpenseDetailSheet extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final currentUserName = currentUser.name;
     final cat = expense.categoryDetails;
-    final isPayerMe = expense.payer.toLowerCase() == currentUserName.toLowerCase() ||
-        expense.payer.toLowerCase() == 'you' ||
-        expense.payer.toLowerCase() == 'satyam';
+    final isPayerMe = currentUser.isMe(expense.payer);
 
     Future<void> handleDelete() async {
       final confirmed = await showDialog<bool>(
@@ -235,9 +233,7 @@ class ExpenseDetailSheet extends ConsumerWidget {
               children: expense.splitOwed.entries.map((entry) {
                 final person = entry.key;
                 final share = entry.value;
-                final isYou = person.toLowerCase() == currentUserName.toLowerCase() ||
-                    person.toLowerCase() == 'you' ||
-                    person.toLowerCase() == 'satyam';
+                final isYou = currentUser.isMe(person);
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6.0),

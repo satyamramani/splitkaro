@@ -31,6 +31,19 @@ class AppUser {
     };
   }
 
+  bool isMe(String? identifier) {
+    if (identifier == null) return false;
+    final clean = identifier.trim().toLowerCase();
+    if (clean.isEmpty) return false;
+
+    // Match against current user's name, email, or id
+    if (name.isNotEmpty && clean == name.trim().toLowerCase()) return true;
+    if (email.isNotEmpty && clean == email.trim().toLowerCase()) return true;
+    if (id.isNotEmpty && clean == id.trim().toLowerCase()) return true;
+
+    return false;
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

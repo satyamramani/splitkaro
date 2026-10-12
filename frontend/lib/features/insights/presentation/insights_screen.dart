@@ -50,22 +50,22 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final currentUserName = currentUser.name;
 
     bool isMe(String name) {
-      final n = name.trim().toLowerCase();
-      return n == currentUserName.toLowerCase() ||
-          n == 'you' ||
-          n == 'satyam' ||
-          (currentUser.email.isNotEmpty && n == currentUser.email.toLowerCase()) ||
-          n == currentUser.id.toLowerCase();
+      return currentUser.isMe(name);
     }
+
+    // Isolate expenses to ones this user is involved in
+    final userExpenses = allExpenses.where((e) {
+      return isMe(e.payer) || e.splitOwed.keys.any((person) => isMe(person));
+    }).toList();
 
     // 1. Group filtering
     final List<Expense> groupFilteredExpenses;
     if (_selectedGroupFilter == null) {
-      groupFilteredExpenses = allExpenses;
+      groupFilteredExpenses = userExpenses;
     } else if (_selectedGroupFilter == '__direct__') {
-      groupFilteredExpenses = allExpenses.where((e) => e.group.isEmpty).toList();
+      groupFilteredExpenses = userExpenses.where((e) => e.group.isEmpty).toList();
     } else {
-      groupFilteredExpenses = allExpenses.where((e) => e.group == _selectedGroupFilter).toList();
+      groupFilteredExpenses = userExpenses.where((e) => e.group == _selectedGroupFilter).toList();
     }
 
     // 2. Date filtering
