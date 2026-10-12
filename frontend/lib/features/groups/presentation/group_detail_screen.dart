@@ -31,6 +31,171 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   String? _selectedCategoryFilter;
   bool _showOtherGroupDebts = false;
 
+  void _showAddMemberDialog(BuildContext context, Group group) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final allUsers = ref.read(usersProvider).users;
+    final nonMembers = allUsers.where((u) => !group.members.any((m) => u.isMe(m))).toList();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.person_add_outlined, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Add to ${group.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (nonMembers.isNotEmpty) ...[
+                  const Text('Select Existing Friend', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondaryColor)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: nonMembers.map((u) {
+                      return ActionChip(
+                        avatar: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: AppTheme.primaryColor,
+                          child: Text(
+                            u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
+                            style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        label: Text(u.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+                        onPressed: () async {
+                          final success = await ref.read(groupProvider.notifier).addMemberToGroup(group.id, u.name);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted && success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${u.name} added to ${group.name}')),
+                            );
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                ],
+                const Text('Or Add New Member', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondaryColor)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  autofocus: nonMembers.isEmpty,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'e.g. John Doe',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email (optional)',
+                    hintText: 'e.g. john@example.com',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final email = emailController.text.trim();
+                if (name.isEmpty) return;
+
+                // 1. Add to users if new
+                await ref.read(usersProvider.notifier).addUser(name, email.isNotEmpty ? email : null);
+
+                // 2. Add member to group
+                final success = await ref.read(groupProvider.notifier).addMemberToGroup(group.id, name);
+
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted && success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('$name added to ${group.name}')),
+                  );
+                }
+              },
+              icon: const Icon(Icons.check, size: 18),
+              label: const Text('Add Member'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmRemoveMember(BuildContext context, Group group, String memberName, bool isMeUser) async {
+    final title = isMeUser ? 'Leave Group?' : 'Remove Member?';
+    final content = isMeUser
+        ? 'Are you sure you want to leave "${group.name}"? You will lose access to this group until added back.'
+        : 'Are you sure you want to remove "$memberName" from "${group.name}"?';
+    final actionText = isMeUser ? 'Leave' : 'Remove';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            child: Text(actionText),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final success = await ref.read(groupProvider.notifier).removeMemberFromGroup(group.id, memberName);
+      if (!context.mounted) return;
+
+      if (success) {
+        if (isMeUser) {
+          context.pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('You left ${group.name}')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$memberName removed from ${group.name}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update group members.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupState = ref.watch(groupProvider);
@@ -130,6 +295,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       appBar: AppBar(
         title: Text(group.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add_outlined),
+            tooltip: 'Add Member',
+            onPressed: () => _showAddMemberDialog(context, group),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor),
             tooltip: 'Delete Group',
@@ -244,41 +414,90 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Member Avatars Chips
-            const Text('Group Members', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            // Member Avatars & Management Chips
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.group_outlined, size: 18, color: AppTheme.textPrimaryColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Group Members (${group.members.length})', 
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: () => _showAddMemberDialog(context, group),
+                  icon: const Icon(Icons.person_add, size: 16),
+                  label: const Text('Add Member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              runSpacing: 6,
-              children: group.members.map((m) {
-                final isMeUser = isMe(m);
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: isMeUser ? AppTheme.primaryColor : AppTheme.secondaryColor,
-                        child: Text(
-                          m.isNotEmpty ? m[0].toUpperCase() : '?',
-                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+              runSpacing: 8,
+              children: [
+                ...group.members.map((m) {
+                  final isMeUser = isMe(m);
+                  return Container(
+                    padding: const EdgeInsets.only(left: 10, right: 6, top: 5, bottom: 5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: isMeUser ? AppTheme.primaryColor : AppTheme.secondaryColor,
+                          child: Text(
+                            m.isNotEmpty ? m[0].toUpperCase() : '?',
+                            style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isMeUser ? '$m (You)' : m,
-                        style: TextStyle(fontSize: 12.5, fontWeight: isMeUser ? FontWeight.bold : FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                        const SizedBox(width: 6),
+                        Text(
+                          isMeUser ? '$m (You)' : m,
+                          style: TextStyle(fontSize: 12.5, fontWeight: isMeUser ? FontWeight.bold : FontWeight.w500),
+                        ),
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: isMeUser ? 'Leave Group' : 'Remove $m',
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () => _confirmRemoveMember(context, group, m, isMeUser),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Icon(
+                                isMeUser ? Icons.logout : Icons.close,
+                                size: 14,
+                                color: isMeUser ? AppTheme.errorColor : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 15, color: AppTheme.primaryColor),
+                  label: const Text('Add Member', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.25)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  onPressed: () => _showAddMemberDialog(context, group),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
 

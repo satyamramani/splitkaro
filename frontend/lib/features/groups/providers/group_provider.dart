@@ -68,6 +68,78 @@ class GroupNotifier extends Notifier<GroupState> {
       print('Error deleting group: $e');
     }
   }
+
+  Future<bool> addMemberToGroup(String groupId, String memberName) async {
+    final clean = memberName.trim();
+    if (clean.isEmpty) return false;
+
+    final groupIndex = state.groups.indexWhere((g) => g.id == groupId);
+    if (groupIndex == -1) return false;
+    final group = state.groups[groupIndex];
+
+    if (group.members.any((m) => m.trim().toLowerCase() == clean.toLowerCase())) {
+      return true; // Already a member
+    }
+
+    final updatedMembers = [...group.members, clean];
+    try {
+      await pb.collection('groups').update(groupId, body: {
+        'members': updatedMembers,
+      });
+
+      final updatedGroup = Group(
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        members: updatedMembers,
+        created: group.created,
+      );
+
+      state = state.copyWith(
+        groups: [
+          for (final g in state.groups)
+            if (g.id == groupId) updatedGroup else g,
+        ],
+      );
+      return true;
+    } catch (e) {
+      print('Error adding member to group: $e');
+      return false;
+    }
+  }
+
+  Future<bool> removeMemberFromGroup(String groupId, String memberName) async {
+    final clean = memberName.trim().toLowerCase();
+    final groupIndex = state.groups.indexWhere((g) => g.id == groupId);
+    if (groupIndex == -1) return false;
+    final group = state.groups[groupIndex];
+
+    final updatedMembers = group.members.where((m) => m.trim().toLowerCase() != clean).toList();
+    try {
+      await pb.collection('groups').update(groupId, body: {
+        'members': updatedMembers,
+      });
+
+      final updatedGroup = Group(
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        members: updatedMembers,
+        created: group.created,
+      );
+
+      state = state.copyWith(
+        groups: [
+          for (final g in state.groups)
+            if (g.id == groupId) updatedGroup else g,
+        ],
+      );
+      return true;
+    } catch (e) {
+      print('Error removing member from group: $e');
+      return false;
+    }
+  }
 }
 
 final groupProvider = NotifierProvider<GroupNotifier, GroupState>(() {
