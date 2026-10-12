@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../../core/services/pocketbase_service.dart';
+import '../../groups/providers/group_provider.dart';
+import '../../expenses/providers/expense_provider.dart';
+import 'user_provider.dart';
 
 class AuthState {
   final bool isAuthenticated;
@@ -33,7 +36,15 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthState build() {
     final pocketBase = ref.watch(pocketBaseProvider);
     pocketBase.authStore.onChange.listen((e) {
-      state = state.copyWith(isAuthenticated: pocketBase.authStore.isValid);
+      final isValid = pocketBase.authStore.isValid;
+      if (state.isAuthenticated != isValid) {
+        state = state.copyWith(isAuthenticated: isValid);
+        ref.invalidate(currentUserProvider);
+        ref.invalidate(userGroupsProvider);
+        ref.invalidate(groupProvider);
+        ref.invalidate(expenseProvider);
+        ref.invalidate(usersProvider);
+      }
     });
     return AuthState(isAuthenticated: pocketBase.authStore.isValid);
   }
@@ -78,6 +89,11 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       await pb.collection('users').authWithPassword(email, password);
       state = state.copyWith(isLoading: false, isAuthenticated: true);
+      ref.invalidate(currentUserProvider);
+      ref.invalidate(userGroupsProvider);
+      ref.invalidate(groupProvider);
+      ref.invalidate(expenseProvider);
+      ref.invalidate(usersProvider);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _formatError(e));
     }
@@ -102,6 +118,11 @@ class AuthNotifier extends Notifier<AuthState> {
   void logout() {
     pb.authStore.clear();
     state = state.copyWith(isAuthenticated: false);
+    ref.invalidate(currentUserProvider);
+    ref.invalidate(userGroupsProvider);
+    ref.invalidate(groupProvider);
+    ref.invalidate(expenseProvider);
+    ref.invalidate(usersProvider);
   }
 }
 

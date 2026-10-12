@@ -3,8 +3,20 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../../core/services/pocketbase_service.dart';
 import '../models/app_user.dart';
 
+import 'auth_provider.dart';
+
 final currentUserProvider = Provider<AppUser>((ref) {
+  final authState = ref.watch(authProvider);
   final pb = ref.watch(pocketBaseProvider);
+
+  if (!authState.isAuthenticated || !pb.authStore.isValid) {
+    return AppUser(
+      id: '',
+      name: '',
+      email: '',
+    );
+  }
+
   final dynamic model = pb.authStore.record ?? pb.authStore.model;
   
   if (model is RecordModel) {
@@ -12,14 +24,14 @@ final currentUserProvider = Provider<AppUser>((ref) {
     final rawEmail = model.getStringValue('email');
     return AppUser(
       id: model.id,
-      name: rawName.isNotEmpty ? rawName : (rawEmail.isNotEmpty ? rawEmail.split('@').first : 'User'),
+      name: rawName.isNotEmpty ? rawName : (rawEmail.isNotEmpty ? rawEmail.split('@').first : ''),
       email: rawEmail,
     );
   }
 
   return AppUser(
     id: '',
-    name: 'User',
+    name: '',
     email: '',
   );
 });

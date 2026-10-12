@@ -42,6 +42,39 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final currentUserName = currentUser.name;
 
+    if (group.members.isNotEmpty && !group.isMember(currentUser)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Group Access')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Access Restricted',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You are not a member of this group.',
+                  style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Back to Groups'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     bool isMe(String name) {
       return currentUser.isMe(name);
     }
