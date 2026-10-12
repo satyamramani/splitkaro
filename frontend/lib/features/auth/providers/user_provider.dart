@@ -148,6 +148,13 @@ class UsersNotifier extends Notifier<UsersState> {
       return null;
     }
   }
+
+  Future<void> removeFriend(String name) async {
+    final clean = name.trim().toLowerCase();
+    state = state.copyWith(
+      users: state.users.where((u) => u.name.trim().toLowerCase() != clean).toList(),
+    );
+  }
 }
 
 final usersProvider = NotifierProvider<UsersNotifier, UsersState>(() {

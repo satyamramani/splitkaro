@@ -73,27 +73,20 @@ class GroupNotifier extends Notifier<GroupState> {
     final clean = memberName.trim();
     if (clean.isEmpty) return false;
 
-    final groupIndex = state.groups.indexWhere((g) => g.id == groupId);
-    if (groupIndex == -1) return false;
-    final group = state.groups[groupIndex];
-
-    if (group.members.any((m) => m.trim().toLowerCase() == clean.toLowerCase())) {
-      return true; // Already a member
-    }
-
-    final updatedMembers = [...group.members, clean];
     try {
-      await pb.collection('groups').update(groupId, body: {
+      final record = await pb.collection('groups').getOne(groupId);
+      final currentGroup = Group.fromJson(record.toJson());
+
+      if (currentGroup.members.any((m) => m.trim().toLowerCase() == clean.toLowerCase())) {
+        return true; // Already a member
+      }
+
+      final updatedMembers = [...currentGroup.members, clean];
+      final updatedRecord = await pb.collection('groups').update(groupId, body: {
         'members': updatedMembers,
       });
 
-      final updatedGroup = Group(
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        members: updatedMembers,
-        created: group.created,
-      );
+      final updatedGroup = Group.fromJson(updatedRecord.toJson());
 
       state = state.copyWith(
         groups: [
@@ -101,6 +94,9 @@ class GroupNotifier extends Notifier<GroupState> {
             if (g.id == groupId) updatedGroup else g,
         ],
       );
+      if (!state.groups.any((g) => g.id == groupId)) {
+        state = state.copyWith(groups: [updatedGroup, ...state.groups]);
+      }
       return true;
     } catch (e) {
       print('Error adding member to group: $e');
@@ -110,23 +106,17 @@ class GroupNotifier extends Notifier<GroupState> {
 
   Future<bool> removeMemberFromGroup(String groupId, String memberName) async {
     final clean = memberName.trim().toLowerCase();
-    final groupIndex = state.groups.indexWhere((g) => g.id == groupId);
-    if (groupIndex == -1) return false;
-    final group = state.groups[groupIndex];
-
-    final updatedMembers = group.members.where((m) => m.trim().toLowerCase() != clean).toList();
     try {
-      await pb.collection('groups').update(groupId, body: {
+      final record = await pb.collection('groups').getOne(groupId);
+      final currentGroup = Group.fromJson(record.toJson());
+
+      final updatedMembers = currentGroup.members.where((m) => m.trim().toLowerCase() != clean).toList();
+
+      final updatedRecord = await pb.collection('groups').update(groupId, body: {
         'members': updatedMembers,
       });
 
-      final updatedGroup = Group(
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        members: updatedMembers,
-        created: group.created,
-      );
+      final updatedGroup = Group.fromJson(updatedRecord.toJson());
 
       state = state.copyWith(
         groups: [

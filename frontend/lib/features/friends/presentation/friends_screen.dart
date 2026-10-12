@@ -78,6 +78,39 @@ class FriendsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _confirmRemoveFriend(BuildContext context, WidgetRef ref, String friendName) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Friend?', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to remove "$friendName" from your friends list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ref.read(usersProvider.notifier).removeFriend(friendName);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed $friendName from friends'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usersState = ref.watch(usersProvider);
@@ -226,6 +259,12 @@ class FriendsScreen extends ConsumerWidget {
                                 ),
                               ],
                             ],
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.person_remove_outlined, size: 18, color: AppTheme.textSecondaryColor),
+                            tooltip: 'Remove friend',
+                            onPressed: () => _confirmRemoveFriend(context, ref, friend.name),
                           ),
                         ],
                       ),

@@ -36,278 +36,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Consumer(
-        builder: (ctx, ref, _) {
-          final groups = ref.watch(groupProvider).groups;
-          final group = groups.firstWhere(
-            (g) => g.id == currentGroup.id,
-            orElse: () => currentGroup,
-          );
-          final currentUser = ref.watch(currentUserProvider);
-          final allUsers = ref.watch(usersProvider).users;
-          final nonMembers = allUsers.where((u) => !group.members.any((m) => u.isMe(m))).toList();
-
-          final nameController = TextEditingController();
-
-          return StatefulBuilder(
-            builder: (ctx, setSheetState) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.78,
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                child: Column(
-                  children: [
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 12, bottom: 8),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Group Members',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${group.members.length} people in ${group.name}',
-                                style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryColor),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: AppTheme.textSecondaryColor),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.person_add_outlined, color: AppTheme.primaryColor, size: 20),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TextField(
-                                    controller: nameController,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Add friend by name...',
-                                      hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 12),
-                                    ),
-                                    onSubmitted: (val) async {
-                                      final clean = val.trim();
-                                      if (clean.isEmpty) return;
-                                      await ref.read(usersProvider.notifier).addUser(clean);
-                                      await ref.read(groupProvider.notifier).addMemberToGroup(group.id, clean);
-                                      nameController.clear();
-                                    },
-                                  ),
-                                ),
-                                FilledButton(
-                                  onPressed: () async {
-                                    final clean = nameController.text.trim();
-                                    if (clean.isEmpty) return;
-                                    await ref.read(usersProvider.notifier).addUser(clean);
-                                    await ref.read(groupProvider.notifier).addMemberToGroup(group.id, clean);
-                                    nameController.clear();
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    visualDensity: VisualDensity.compact,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  child: const Text('Add', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          if (nonMembers.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                const Icon(Icons.auto_awesome, size: 14, color: AppTheme.primaryColor),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Quick Add from Friends',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey.shade700,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                children: nonMembers.map((u) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8.0),
-                                    child: ActionChip(
-                                      elevation: 0,
-                                      avatar: CircleAvatar(
-                                        radius: 11,
-                                        backgroundColor: AppTheme.primaryColor,
-                                        child: Text(
-                                          u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
-                                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      label: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(u.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.add, size: 14, color: AppTheme.primaryColor),
-                                        ],
-                                      ),
-                                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
-                                      side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      onPressed: () async {
-                                        await ref.read(groupProvider.notifier).addMemberToGroup(group.id, u.name);
-                                      },
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Current Members (${group.members.length})',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade700,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceColor,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: group.members.length,
-                              separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
-                              itemBuilder: (context, index) {
-                                final m = group.members[index];
-                                final isMeUser = currentUser.isMe(m);
-                                final initial = m.isNotEmpty ? m[0].toUpperCase() : '?';
-
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                                  leading: CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: isMeUser
-                                        ? AppTheme.primaryColor
-                                        : AppTheme.secondaryColor.withValues(alpha: 0.85),
-                                    child: Text(
-                                      initial,
-                                      style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Text(
-                                        m,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: isMeUser ? FontWeight.bold : FontWeight.w500,
-                                        ),
-                                      ),
-                                      if (isMeUser) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primaryColor.withValues(alpha: 0.12),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: const Text(
-                                            'You',
-                                            style: TextStyle(
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryColor,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  trailing: IconButton(
-                                    icon: Icon(
-                                      isMeUser ? Icons.logout : Icons.remove_circle_outline,
-                                      color: isMeUser ? Colors.orange.shade700 : AppTheme.errorColor.withValues(alpha: 0.7),
-                                      size: 20,
-                                    ),
-                                    tooltip: isMeUser ? 'Leave group' : 'Remove $m',
-                                    onPressed: () async {
-                                      final shouldRemove = await _confirmRemoveMember(context, group, m, isMeUser);
-                                      if (shouldRemove == true && isMeUser && ctx.mounted) {
-                                        Navigator.pop(ctx);
-                                      }
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+      builder: (bottomSheetContext) => _ManageMembersSheet(
+        initialGroup: currentGroup,
+        onRemoveMember: (memberName, isMeUser) async {
+          final removed = await _confirmRemoveMember(context, currentGroup, memberName, isMeUser);
+          if (removed && isMeUser && bottomSheetContext.mounted) {
+            Navigator.pop(bottomSheetContext);
+          }
         },
       ),
     );
@@ -1156,6 +891,311 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             const SizedBox(height: 30),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ManageMembersSheet extends ConsumerStatefulWidget {
+  final Group initialGroup;
+  final Function(String memberName, bool isMeUser) onRemoveMember;
+
+  const _ManageMembersSheet({
+    required this.initialGroup,
+    required this.onRemoveMember,
+  });
+
+  @override
+  ConsumerState<_ManageMembersSheet> createState() => _ManageMembersSheetState();
+}
+
+class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
+  late final TextEditingController _nameController;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addMember(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty || _isLoading) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(usersProvider.notifier).addUser(clean);
+      final success = await ref.read(groupProvider.notifier).addMemberToGroup(widget.initialGroup.id, clean);
+      if (mounted) {
+        _nameController.clear();
+        setState(() => _isLoading = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$clean added to group!'),
+              backgroundColor: AppTheme.secondaryColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = ref.watch(groupProvider).groups;
+    final group = groups.firstWhere(
+      (g) => g.id == widget.initialGroup.id,
+      orElse: () => widget.initialGroup,
+    );
+    final currentUser = ref.watch(currentUserProvider);
+    final allUsers = ref.watch(usersProvider).users;
+    final nonMembers = allUsers.where((u) => !group.members.any((m) => u.isMe(m))).toList();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.78,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Group Members',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${group.members.length} people in ${group.name}',
+                      style: const TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryColor),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: AppTheme.textSecondaryColor),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              children: [
+                // Add Member Input Box
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_add_outlined, color: AppTheme.primaryColor, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            hintText: 'Add friend by name...',
+                            hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onSubmitted: (val) => _addMember(val),
+                        ),
+                      ),
+                      FilledButton(
+                        onPressed: _isLoading ? null : () => _addMember(_nameController.text),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          visualDensity: VisualDensity.compact,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Add', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Quick Add Suggestions
+                if (nonMembers.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, size: 14, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Quick Add from Friends',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: nonMembers.map((u) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ActionChip(
+                            elevation: 0,
+                            avatar: CircleAvatar(
+                              radius: 11,
+                              backgroundColor: AppTheme.primaryColor,
+                              child: Text(
+                                u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
+                                style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(u.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.add, size: 14, color: AppTheme.primaryColor),
+                              ],
+                            ),
+                            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+                            side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            onPressed: () => _addMember(u.name),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Current Members Section
+                Text(
+                  'Current Members (${group.members.length})',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: group.members.length,
+                    separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                    itemBuilder: (context, index) {
+                      final m = group.members[index];
+                      final isMeUser = currentUser.isMe(m);
+                      final initial = m.isNotEmpty ? m[0].toUpperCase() : '?';
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: isMeUser
+                              ? AppTheme.primaryColor
+                              : AppTheme.secondaryColor.withValues(alpha: 0.85),
+                          child: Text(
+                            initial,
+                            style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              m,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isMeUser ? FontWeight.bold : FontWeight.w500,
+                              ),
+                            ),
+                            if (isMeUser) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'You',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(
+                            isMeUser ? Icons.logout : Icons.remove_circle_outline,
+                            color: isMeUser ? Colors.orange.shade700 : AppTheme.errorColor.withValues(alpha: 0.7),
+                            size: 20,
+                          ),
+                          tooltip: isMeUser ? 'Leave group' : 'Remove $m',
+                          onPressed: () => widget.onRemoveMember(m, isMeUser),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
