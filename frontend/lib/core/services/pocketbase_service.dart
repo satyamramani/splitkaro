@@ -5,19 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const String _kCustomUrl = String.fromEnvironment('PB_URL', defaultValue: '');
 
-// PocketBase server URL (Local development by default)
+// PocketBase server URL
 String get pbUrl {
   if (_kCustomUrl.isNotEmpty) {
     return _kCustomUrl;
   }
 
-  if (kIsWeb) {
-    return 'http://127.0.0.1:18090';
-  }
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    return 'http://10.0.2.2:18090'; // Android emulator
-  }
-  return 'http://127.0.0.1:18090'; // iOS / macOS / Desktop
+  return 'https://pocket.chai-tea.duckdns.org';
 }
 
 // Global PocketBase instance
