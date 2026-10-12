@@ -44,8 +44,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   Widget build(BuildContext context) {
     final expenseState = ref.watch(expenseProvider);
     final allExpenses = expenseState.expenses.where((e) => !e.isSettlement).toList();
-    final groupState = ref.watch(groupProvider);
-    final groups = groupState.groups;
+    final groups = ref.watch(userGroupsProvider);
     final currentUser = ref.watch(currentUserProvider);
     final currentUserName = currentUser.name;
 

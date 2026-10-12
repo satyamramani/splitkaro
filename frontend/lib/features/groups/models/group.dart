@@ -1,3 +1,5 @@
+import '../../auth/models/app_user.dart';
+
 class Group {
   final String id;
   final String name;
@@ -12,6 +14,11 @@ class Group {
     required this.members,
     required this.created,
   });
+
+  bool isMember(AppUser user) {
+    if (user.id.isEmpty && user.name.isEmpty) return false;
+    return members.any((m) => user.isMe(m));
+  }
 
   factory Group.fromJson(Map<String, dynamic> json) {
     final rawMembers = json['members'];

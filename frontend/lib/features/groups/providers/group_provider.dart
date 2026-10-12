@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../../core/services/pocketbase_service.dart';
+import '../../auth/providers/user_provider.dart';
 import '../models/group.dart';
 
 class GroupState {
@@ -71,4 +72,10 @@ class GroupNotifier extends Notifier<GroupState> {
 
 final groupProvider = NotifierProvider<GroupNotifier, GroupState>(() {
   return GroupNotifier();
+});
+
+final userGroupsProvider = Provider<List<Group>>((ref) {
+  final groupState = ref.watch(groupProvider);
+  final currentUser = ref.watch(currentUserProvider);
+  return groupState.groups.where((g) => g.isMember(currentUser)).toList();
 });

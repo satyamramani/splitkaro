@@ -31,8 +31,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final groupState = ref.watch(groupProvider);
-    final groups = groupState.groups;
+    final groups = ref.watch(userGroupsProvider);
     final expenseState = ref.watch(expenseProvider);
     final expenses = expenseState.expenses;
     final simplifiedDebts = ref.watch(simplifiedDebtsProvider);

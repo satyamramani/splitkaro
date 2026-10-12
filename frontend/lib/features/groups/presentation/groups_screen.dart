@@ -99,7 +99,10 @@ class GroupsScreen extends ConsumerWidget {
   }
 
   void _showDirectExpenses(BuildContext context, WidgetRef ref) {
-    final directExpenses = ref.read(expenseProvider).expenses.where((e) => e.group.isEmpty).toList();
+    final currentUser = ref.read(currentUserProvider);
+    final directExpenses = ref.read(expenseProvider).expenses.where((e) => 
+      e.group.isEmpty && (currentUser.isMe(e.payer) || e.splitOwed.keys.any((p) => currentUser.isMe(p)))
+    ).toList();
     final double totalDirectSpend = directExpenses.where((e) => !e.isSettlement).fold(0.0, (sum, e) => sum + e.amount);
 
     showModalBottomSheet(
@@ -202,10 +205,14 @@ class GroupsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupState = ref.watch(groupProvider);
-    final groups = groupState.groups;
+    final currentUser = ref.watch(currentUserProvider);
+    final groups = ref.watch(userGroupsProvider);
     final allExpenses = ref.watch(expenseProvider).expenses;
 
-    final directExpenses = allExpenses.where((e) => e.group.isEmpty).toList();
+    // Only show direct expenses that involve currentUser
+    final directExpenses = allExpenses.where((e) => 
+      e.group.isEmpty && (currentUser.isMe(e.payer) || e.splitOwed.keys.any((p) => currentUser.isMe(p)))
+    ).toList();
     final double totalDirectSpend = directExpenses.where((e) => !e.isSettlement).fold(0.0, (sum, e) => sum + e.amount);
 
     return Scaffold(

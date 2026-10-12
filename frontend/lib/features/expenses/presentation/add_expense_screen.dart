@@ -310,7 +310,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     final usersState = ref.watch(usersProvider);
-    final groupState = ref.watch(groupProvider);
+    final userGroups = ref.watch(userGroupsProvider);
     final currentUser = ref.watch(currentUserProvider);
     final currentUserName = currentUser.name;
 
@@ -320,7 +320,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       userNames.insert(0, currentUserName);
     }
 
-    _syncParticipants(userNames, currentUserName, groupState.groups);
+    _syncParticipants(userNames, currentUserName, userGroups);
 
     final isEditing = widget.existingExpense != null;
     final titleText = isEditing
@@ -537,7 +537,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                     ],
                   ),
                 ),
-                if (groupState.groups.isNotEmpty) ...[
+                if (userGroups.isNotEmpty) ...[
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -563,7 +563,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                                   value: null,
                                   child: Text('Direct split', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13)),
                                 ),
-                                ...groupState.groups.map((g) => DropdownMenuItem<String?>(
+                                ...userGroups.map((g) => DropdownMenuItem<String?>(
                                   value: g.name,
                                   child: Text(g.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
                                 )),
@@ -572,7 +572,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                                 setState(() {
                                   _selectedGroupName = val;
                                   if (val != null) {
-                                    final group = groupState.groups.firstWhere((g) => g.name == val);
+                                    final group = userGroups.firstWhere((g) => g.name == val);
                                     _selectedParticipants.clear();
                                     _selectedParticipants.addAll(group.members);
                                   }
