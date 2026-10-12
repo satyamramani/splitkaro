@@ -157,7 +157,7 @@ class FriendsScreen extends ConsumerWidget {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   itemCount: friends.length + 1, // +1 for bottom FAB spacing
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                   itemBuilder: (context, index) {
                     if (index == friends.length) {
                       return const SizedBox(height: 80); // FAB safe padding

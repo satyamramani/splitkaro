@@ -353,15 +353,11 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
-            ],
+          decoration: const BoxDecoration(
+            color: AppTheme.darkSurface,
+            border: Border(
+              top: BorderSide(color: AppTheme.darkBorder, width: 1.0),
+            ),
           ),
           child: FilledButton.icon(
             onPressed: _saveExpense,
@@ -473,7 +469,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+                        color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
                       ),
                     ),
                     selected: isSelected,
@@ -482,7 +478,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                     backgroundColor: cat.color.withValues(alpha: 0.1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: isSelected ? cat.color : Colors.transparent),
+                      side: BorderSide(color: isSelected ? cat.color : AppTheme.darkBorder),
                     ),
                     onSelected: (_) {
                       setState(() {
@@ -509,8 +505,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: AppTheme.surfaceColor,
-                          border: Border.all(color: Colors.grey.shade300),
+                          color: AppTheme.darkCardElevated,
+                          border: Border.all(color: AppTheme.darkBorder),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
@@ -549,8 +545,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            color: AppTheme.surfaceColor,
-                            border: Border.all(color: Colors.grey.shade300),
+                            color: AppTheme.darkCardElevated,
+                            border: Border.all(color: AppTheme.darkBorder),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String?>(
@@ -650,9 +646,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.surfaceColor : Colors.grey.shade50,
+                  color: isSelected ? AppTheme.darkCard : AppTheme.darkBackground,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.3) : Colors.grey.shade200),
+                  border: Border.all(color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.4) : AppTheme.darkBorder),
                 ),
                 child: Row(
                   children: [

@@ -75,7 +75,7 @@ class ExpenseDetailSheet extends ConsumerWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.darkSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -94,7 +94,7 @@ class ExpenseDetailSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppTheme.darkBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -175,16 +175,16 @@ class ExpenseDetailSheet extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 18),
-          const Divider(height: 1),
+          const Divider(height: 1, color: AppTheme.darkBorderSubtle),
           const SizedBox(height: 14),
 
           // Payer Information Card
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
+              color: AppTheme.darkCard,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: AppTheme.darkBorder),
             ),
             child: Row(
               children: [
@@ -225,9 +225,9 @@ class ExpenseDetailSheet extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.backgroundColor,
+              color: AppTheme.darkCardElevated,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: AppTheme.darkBorder),
             ),
             child: Column(
               children: expense.splitOwed.entries.map((entry) {
@@ -244,10 +244,10 @@ class ExpenseDetailSheet extends ConsumerWidget {
                         children: [
                           CircleAvatar(
                             radius: 12,
-                            backgroundColor: isYou ? AppTheme.primaryColor : Colors.grey.shade400,
+                            backgroundColor: isYou ? AppTheme.primaryColor : AppTheme.darkBorder,
                             child: Text(
                               person.isNotEmpty ? person[0].toUpperCase() : '?',
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: isYou ? Colors.white : AppTheme.textSecondaryColor, fontSize: 10, fontWeight: FontWeight.bold),
                             ),
                           ),
                           const SizedBox(width: 8),

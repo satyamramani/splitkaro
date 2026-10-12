@@ -165,7 +165,7 @@ class GroupsScreen extends ConsumerWidget {
                       )
                     : ListView.separated(
                         itemCount: directExpenses.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1),
+                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                         itemBuilder: (context, index) {
                           final exp = directExpenses[index];
                           final cat = exp.categoryDetails;

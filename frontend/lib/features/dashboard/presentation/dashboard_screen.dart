@@ -183,13 +183,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       label: const Text('All Groups', style: TextStyle(fontSize: 12.5)),
                       labelStyle: TextStyle(
                         fontWeight: _selectedGroupFilter == null ? FontWeight.bold : FontWeight.w500,
-                        color: _selectedGroupFilter == null ? Colors.white : AppTheme.textPrimaryColor,
+                        color: _selectedGroupFilter == null ? Colors.white : AppTheme.textSecondaryColor,
                       ),
                       selectedColor: AppTheme.primaryColor,
-                      backgroundColor: AppTheme.surfaceColor,
+                      backgroundColor: AppTheme.darkCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: _selectedGroupFilter == null ? AppTheme.primaryColor : Colors.grey.shade300),
+                        side: BorderSide(color: _selectedGroupFilter == null ? AppTheme.primaryColor : AppTheme.darkBorder),
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -210,18 +210,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           avatar: Icon(
                             Icons.group_outlined, 
                             size: 15, 
-                            color: isSelected ? Colors.white : AppTheme.primaryColor,
+                            color: isSelected ? Colors.white : AppTheme.primaryLight,
                           ),
                           label: Text(g.name, style: const TextStyle(fontSize: 12.5)),
                           labelStyle: TextStyle(
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+                            color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
                           ),
                           selectedColor: AppTheme.primaryColor,
-                          backgroundColor: AppTheme.surfaceColor,
+                          backgroundColor: AppTheme.darkCard,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300),
+                            side: BorderSide(color: isSelected ? AppTheme.primaryColor : AppTheme.darkBorder),
                           ),
                           onSelected: (_) {
                             setState(() {
@@ -244,13 +244,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       label: const Text('Direct / Non-Group', style: TextStyle(fontSize: 12.5)),
                       labelStyle: TextStyle(
                         fontWeight: _selectedGroupFilter == '__direct__' ? FontWeight.bold : FontWeight.w500,
-                        color: _selectedGroupFilter == '__direct__' ? Colors.white : AppTheme.textPrimaryColor,
+                        color: _selectedGroupFilter == '__direct__' ? Colors.white : AppTheme.textSecondaryColor,
                       ),
-                      selectedColor: AppTheme.secondaryColor,
-                      backgroundColor: AppTheme.surfaceColor,
+                      selectedColor: AppTheme.secondaryColor.withValues(alpha: 0.8),
+                      backgroundColor: AppTheme.darkCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: _selectedGroupFilter == '__direct__' ? AppTheme.secondaryColor : Colors.grey.shade300),
+                        side: BorderSide(color: _selectedGroupFilter == '__direct__' ? AppTheme.secondaryColor : AppTheme.darkBorder),
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -270,14 +270,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeInOut,
                 decoration: BoxDecoration(
-                  color: balanceColor.withValues(alpha: 0.08),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      balanceColor.withValues(alpha: 0.14),
+                      AppTheme.darkCard,
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: balanceColor.withValues(alpha: 0.25), width: 1.5),
+                  border: Border.all(color: balanceColor.withValues(alpha: 0.35), width: 1.2),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                 child: Column(
                   children: [
-                    Text(balanceTitle, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondaryColor, fontWeight: FontWeight.w500)),
+                    Text(balanceTitle, style: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondaryColor, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 6),
                     FittedBox(
                       fit: BoxFit.scaleDown,
@@ -296,7 +303,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Expanded(
                           child: Column(
                             children: [
-                              const Text('You owe', style: TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12)),
+                              const Text('You owe', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                               const SizedBox(height: 4),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
@@ -308,11 +315,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ],
                           ),
                         ),
-                        Container(width: 1, height: 32, color: Colors.grey.shade300),
+                        Container(width: 1, height: 32, color: AppTheme.darkBorder),
                         Expanded(
                           child: Column(
                             children: [
-                              const Text('You are owed', style: TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12)),
+                              const Text('You are owed', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                               const SizedBox(height: 4),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
@@ -421,10 +428,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: 10),
                     Card(
                       elevation: 0,
-                      color: AppTheme.surfaceColor,
+                      color: AppTheme.darkCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: const BorderSide(color: AppTheme.darkBorder),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
@@ -618,15 +625,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: _selectedCategoryFilter == null ? FontWeight.bold : FontWeight.w500,
-                              color: _selectedCategoryFilter == null ? Colors.white : AppTheme.textPrimaryColor,
+                              color: _selectedCategoryFilter == null ? Colors.white : AppTheme.textSecondaryColor,
                             ),
                           ),
                           selectedColor: AppTheme.primaryColor,
-                          backgroundColor: AppTheme.surfaceColor,
+                          backgroundColor: AppTheme.darkCard,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(
-                              color: _selectedCategoryFilter == null ? AppTheme.primaryColor : Colors.grey.shade300,
+                              color: _selectedCategoryFilter == null ? AppTheme.primaryColor : AppTheme.darkBorder,
                             ),
                           ),
                           onSelected: (_) => setState(() => _selectedCategoryFilter = null),
@@ -650,15 +657,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+                                color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
                               ),
                             ),
                             selectedColor: cat.color,
-                            backgroundColor: cat.color.withValues(alpha: 0.08),
+                            backgroundColor: cat.color.withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
-                                color: isSelected ? cat.color : cat.color.withValues(alpha: 0.25),
+                                color: isSelected ? cat.color : AppTheme.darkBorder,
                               ),
                             ),
                             onSelected: (_) {
@@ -757,9 +764,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(28.0),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
+                    color: AppTheme.darkCard,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppTheme.darkBorder),
                   ),
                   child: Column(
                     children: [
@@ -797,7 +804,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: displayedExpenses.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1),
+                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                         itemBuilder: (context, index) {
                           final exp = displayedExpenses[index];
                           final isPayer = isMe(exp.payer);
@@ -982,7 +989,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                              side: const BorderSide(color: AppTheme.darkBorder),
                             ),
                           ),
                         ),

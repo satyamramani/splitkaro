@@ -190,8 +190,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               // Scope Toggle (Total Spend vs My Share)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: AppTheme.darkCardElevated,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.darkBorder),
                 ),
                 padding: const EdgeInsets.all(4),
                 child: Row(
@@ -203,11 +204,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedScope == SpendingScope.totalSpend ? Colors.white : Colors.transparent,
+                            color: _selectedScope == SpendingScope.totalSpend ? AppTheme.primaryColor : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: _selectedScope == SpendingScope.totalSpend
-                                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
-                                : null,
                           ),
                           child: Center(
                             child: Text(
@@ -215,7 +213,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: _selectedScope == SpendingScope.totalSpend ? FontWeight.bold : FontWeight.w500,
-                                color: _selectedScope == SpendingScope.totalSpend ? AppTheme.primaryColor : AppTheme.textSecondaryColor,
+                                color: _selectedScope == SpendingScope.totalSpend ? Colors.white : AppTheme.textSecondaryColor,
                               ),
                             ),
                           ),
@@ -229,11 +227,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
-                            color: _selectedScope == SpendingScope.myShare ? Colors.white : Colors.transparent,
+                            color: _selectedScope == SpendingScope.myShare ? AppTheme.primaryColor : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: _selectedScope == SpendingScope.myShare
-                                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
-                                : null,
                           ),
                           child: Center(
                             child: Text(
@@ -241,7 +236,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: _selectedScope == SpendingScope.myShare ? FontWeight.bold : FontWeight.w500,
-                                color: _selectedScope == SpendingScope.myShare ? AppTheme.primaryColor : AppTheme.textSecondaryColor,
+                                color: _selectedScope == SpendingScope.myShare ? Colors.white : AppTheme.textSecondaryColor,
                               ),
                             ),
                           ),
@@ -282,11 +277,15 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                         selected: _selectedGroupFilter == null,
                         showCheckmark: false,
                         label: const Text('All Groups', style: TextStyle(fontSize: 11.5)),
-                        selectedColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-                        backgroundColor: AppTheme.surfaceColor,
+                        labelStyle: TextStyle(
+                          color: _selectedGroupFilter == null ? Colors.white : AppTheme.textSecondaryColor,
+                          fontWeight: _selectedGroupFilter == null ? FontWeight.bold : FontWeight.w500,
+                        ),
+                        selectedColor: AppTheme.primaryColor,
+                        backgroundColor: AppTheme.darkCard,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: _selectedGroupFilter == null ? AppTheme.primaryColor : Colors.grey.shade300),
+                          side: BorderSide(color: _selectedGroupFilter == null ? AppTheme.primaryColor : AppTheme.darkBorder),
                         ),
                         onSelected: (_) => setState(() => _selectedGroupFilter = null),
                       ),
@@ -296,13 +295,17 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                             child: FilterChip(
                               selected: _selectedGroupFilter == g.name,
                               showCheckmark: false,
-                              avatar: Icon(Icons.group_outlined, size: 13, color: _selectedGroupFilter == g.name ? AppTheme.primaryColor : AppTheme.textSecondaryColor),
+                              avatar: Icon(Icons.group_outlined, size: 13, color: _selectedGroupFilter == g.name ? Colors.white : AppTheme.primaryLight),
                               label: Text(g.name, style: const TextStyle(fontSize: 11.5)),
-                              selectedColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-                              backgroundColor: AppTheme.surfaceColor,
+                              labelStyle: TextStyle(
+                                color: _selectedGroupFilter == g.name ? Colors.white : AppTheme.textSecondaryColor,
+                                fontWeight: _selectedGroupFilter == g.name ? FontWeight.bold : FontWeight.w500,
+                              ),
+                              selectedColor: AppTheme.primaryColor,
+                              backgroundColor: AppTheme.darkCard,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(color: _selectedGroupFilter == g.name ? AppTheme.primaryColor : Colors.grey.shade300),
+                                side: BorderSide(color: _selectedGroupFilter == g.name ? AppTheme.primaryColor : AppTheme.darkBorder),
                               ),
                               onSelected: (_) => setState(() => _selectedGroupFilter = _selectedGroupFilter == g.name ? null : g.name),
                             ),
@@ -310,13 +313,17 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       FilterChip(
                         selected: _selectedGroupFilter == '__direct__',
                         showCheckmark: false,
-                        avatar: Icon(Icons.person_pin_circle_outlined, size: 13, color: _selectedGroupFilter == '__direct__' ? AppTheme.secondaryColor : AppTheme.textSecondaryColor),
+                        avatar: Icon(Icons.person_pin_circle_outlined, size: 13, color: _selectedGroupFilter == '__direct__' ? Colors.white : AppTheme.secondaryColor),
                         label: const Text('Direct / Non-Group', style: TextStyle(fontSize: 11.5)),
-                        selectedColor: AppTheme.secondaryColor.withValues(alpha: 0.15),
-                        backgroundColor: AppTheme.surfaceColor,
+                        labelStyle: TextStyle(
+                          color: _selectedGroupFilter == '__direct__' ? Colors.white : AppTheme.textSecondaryColor,
+                          fontWeight: _selectedGroupFilter == '__direct__' ? FontWeight.bold : FontWeight.w500,
+                        ),
+                        selectedColor: AppTheme.secondaryColor.withValues(alpha: 0.8),
+                        backgroundColor: AppTheme.darkCard,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: _selectedGroupFilter == '__direct__' ? AppTheme.secondaryColor : Colors.grey.shade300),
+                          side: BorderSide(color: _selectedGroupFilter == '__direct__' ? AppTheme.secondaryColor : AppTheme.darkBorder),
                         ),
                         onSelected: (_) => setState(() => _selectedGroupFilter = _selectedGroupFilter == '__direct__' ? null : '__direct__'),
                       ),
@@ -451,9 +458,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceColor,
+                  color: AppTheme.darkCard,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppTheme.darkBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,7 +513,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                                         end: Alignment.topCenter,
                                         colors: isHighlighted
                                             ? [AppTheme.primaryColor, const Color(0xFF818CF8)]
-                                            : [Colors.grey.shade300, Colors.grey.shade200],
+                                            : [AppTheme.darkCardElevated, AppTheme.darkBorder],
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -549,9 +556,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 Container(
                   padding: const EdgeInsets.all(28.0),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
+                    color: AppTheme.darkCard,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppTheme.darkBorder),
                   ),
                   child: const Column(
                     children: [
@@ -577,11 +584,11 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     padding: const EdgeInsets.only(bottom: 10.0),
                     child: Card(
                       elevation: 0,
-                      color: AppTheme.surfaceColor,
+                      color: AppTheme.darkCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                         side: BorderSide(
-                          color: isExpanded ? cat.color.withValues(alpha: 0.5) : Colors.grey.shade200,
+                          color: isExpanded ? cat.color.withValues(alpha: 0.5) : AppTheme.darkBorder,
                           width: isExpanded ? 1.5 : 1.0,
                         ),
                       ),
@@ -645,7 +652,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                                 child: LinearProgressIndicator(
                                   value: pct,
                                   minHeight: 6,
-                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundColor: AppTheme.darkCardElevated,
                                   valueColor: AlwaysStoppedAnimation<Color>(cat.color),
                                 ),
                               ),
@@ -703,10 +710,10 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 const SizedBox(height: 10),
                 Card(
                   elevation: 0,
-                  color: AppTheme.surfaceColor,
+                  color: AppTheme.darkCard,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.shade200),
+                    side: const BorderSide(color: AppTheme.darkBorder),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
@@ -770,17 +777,17 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     return FilterChip(
       selected: isSelected,
       showCheckmark: false,
-      avatar: Icon(icon, size: 14, color: isSelected ? Colors.white : AppTheme.primaryColor),
+      avatar: Icon(icon, size: 14, color: isSelected ? Colors.white : AppTheme.primaryLight),
       label: Text(label, style: const TextStyle(fontSize: 12)),
       labelStyle: TextStyle(
         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-        color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+        color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
       ),
       selectedColor: AppTheme.primaryColor,
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: AppTheme.darkCard,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300),
+        side: BorderSide(color: isSelected ? AppTheme.primaryColor : AppTheme.darkBorder),
       ),
       onSelected: (_) => setState(() => _selectedTimeRange = filter),
     );

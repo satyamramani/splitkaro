@@ -119,7 +119,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                const Icon(Icons.lock_outline, size: 64, color: AppTheme.textSecondaryColor),
                 const SizedBox(height: 16),
                 const Text(
                   'Access Restricted',
@@ -128,7 +128,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'You are not a member of this group.',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppTheme.textSecondaryColor),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -233,15 +233,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
-            ],
+          decoration: const BoxDecoration(
+            color: AppTheme.darkSurface,
+            border: Border(
+              top: BorderSide(color: AppTheme.darkBorder, width: 1.0),
+            ),
           ),
           child: FilledButton.icon(
             onPressed: () => context.push('/add-expense', extra: group.name),
@@ -264,9 +260,16 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             Container(
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
-                color: balanceColor.withValues(alpha: 0.08),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    balanceColor.withValues(alpha: 0.14),
+                    AppTheme.darkCard,
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: balanceColor.withValues(alpha: 0.25), width: 1.5),
+                border: Border.all(color: balanceColor.withValues(alpha: 0.35), width: 1.2),
               ),
               child: Column(
                 children: [
@@ -297,7 +300,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                           ],
                         ),
                       ),
-                      Container(width: 1, height: 28, color: Colors.grey.shade300),
+                      Container(width: 1, height: 28, color: AppTheme.darkBorder),
                       Expanded(
                         child: Column(
                           children: [
@@ -321,9 +324,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceColor,
+                color: AppTheme.darkCard,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.darkBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,10 +479,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   if (myGroupDebts.isNotEmpty)
                     Card(
                       elevation: 0,
-                      color: AppTheme.surfaceColor,
+                      color: AppTheme.darkCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
+                        side: const BorderSide(color: AppTheme.darkBorder),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
@@ -619,9 +622,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
+                        color: AppTheme.darkCardElevated,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: AppTheme.darkBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,15 +670,15 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: _selectedCategoryFilter == null ? FontWeight.bold : FontWeight.w500,
-                            color: _selectedCategoryFilter == null ? Colors.white : AppTheme.textPrimaryColor,
+                            color: _selectedCategoryFilter == null ? Colors.white : AppTheme.textSecondaryColor,
                           ),
                         ),
                         selectedColor: AppTheme.primaryColor,
-                        backgroundColor: AppTheme.surfaceColor,
+                        backgroundColor: AppTheme.darkCard,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: _selectedCategoryFilter == null ? AppTheme.primaryColor : Colors.grey.shade300,
+                            color: _selectedCategoryFilter == null ? AppTheme.primaryColor : AppTheme.darkBorder,
                           ),
                         ),
                         onSelected: (_) => setState(() => _selectedCategoryFilter = null),
@@ -698,14 +701,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+                              color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
                             ),
                           ),
                           selectedColor: cat.color,
-                          backgroundColor: cat.color.withValues(alpha: 0.08),
+                          backgroundColor: cat.color.withValues(alpha: 0.1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: isSelected ? cat.color : cat.color.withValues(alpha: 0.25)),
+                            side: BorderSide(color: isSelected ? cat.color : AppTheme.darkBorder),
                           ),
                           onSelected: (_) => setState(() {
                             _selectedCategoryFilter = isSelected ? null : cat.id;
@@ -737,9 +740,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(28.0),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceColor,
+                  color: AppTheme.darkCard,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppTheme.darkBorder),
                 ),
                 child: Column(
                   children: [
@@ -765,7 +768,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredExpenses.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
+                separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                 itemBuilder: (context, index) {
                   final exp = filteredExpenses[index];
                   final isPayer = isMe(exp.payer);
@@ -968,7 +971,7 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.darkSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -979,7 +982,7 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppTheme.darkBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1019,9 +1022,9 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: AppTheme.darkCardElevated,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppTheme.darkBorder),
                   ),
                   child: Row(
                     children: [
@@ -1032,7 +1035,7 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
                           controller: _nameController,
                           decoration: const InputDecoration(
                             hintText: 'Add friend by name...',
-                            hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey),
+                            hintStyle: TextStyle(fontSize: 13.5, color: AppTheme.textMuted),
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -1067,7 +1070,7 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
+                          color: AppTheme.textSecondaryColor,
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -1117,22 +1120,22 @@ class _ManageMembersSheetState extends ConsumerState<_ManageMembersSheet> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
+                    color: AppTheme.textSecondaryColor,
                     letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
+                    color: AppTheme.darkCard,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppTheme.darkBorder),
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: group.members.length,
-                    separatorBuilder: (context, i) => Divider(height: 1, color: Colors.grey.shade200),
+                    separatorBuilder: (context, i) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                     itemBuilder: (context, index) {
                       final m = group.members[index];
                       final isMeUser = currentUser.isMe(m);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ShimmerSkeleton extends StatefulWidget {
   final double width;
@@ -25,9 +26,9 @@ class _ShimmerSkeletonState extends State<ShimmerSkeleton> with SingleTickerProv
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 0.8).animate(
+    _animation = Tween<double>(begin: 0.35, end: 0.75).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -47,8 +48,12 @@ class _ShimmerSkeletonState extends State<ShimmerSkeleton> with SingleTickerProv
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300.withValues(alpha: _animation.value),
+            color: AppTheme.darkCardElevated.withValues(alpha: _animation.value),
             borderRadius: BorderRadius.circular(widget.borderRadius),
+            border: Border.all(
+              color: AppTheme.darkBorder.withValues(alpha: _animation.value * 0.5),
+              width: 0.8,
+            ),
           ),
         );
       },
@@ -68,24 +73,24 @@ class ExpenseListSkeleton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
             children: [
-              const ShimmerSkeleton(width: 46, height: 46, borderRadius: 12),
+              const ShimmerSkeleton(width: 44, height: 44, borderRadius: 12),
               const SizedBox(width: 14),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ShimmerSkeleton(width: 140, height: 16),
-                    SizedBox(height: 6),
-                    ShimmerSkeleton(width: 90, height: 12),
+                    ShimmerSkeleton(width: 130, height: 15, borderRadius: 6),
+                    SizedBox(height: 7),
+                    ShimmerSkeleton(width: 85, height: 11, borderRadius: 4),
                   ],
                 ),
               ),
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  ShimmerSkeleton(width: 50, height: 12),
-                  SizedBox(height: 6),
-                  ShimmerSkeleton(width: 60, height: 16),
+                  ShimmerSkeleton(width: 48, height: 11, borderRadius: 4),
+                  SizedBox(height: 7),
+                  ShimmerSkeleton(width: 58, height: 15, borderRadius: 6),
                 ],
               ),
             ],
