@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/services/pocketbase_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  final pocketBase = await initPocketBase();
+
   runApp(
-    const ProviderScope(
-      child: SplitwiseCloneApp(),
+    ProviderScope(
+      overrides: [
+        pocketBaseProvider.overrideWithValue(pocketBase),
+      ],
+      child: const SplitwiseCloneApp(),
     ),
   );
 }

@@ -15,7 +15,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: authState.isAuthenticated ? '/dashboard' : '/login',
     redirect: (context, state) {
       final isAuth = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
