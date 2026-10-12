@@ -9,7 +9,7 @@ Deploy both the **Flutter Web Frontend** and **PocketBase Backend** on your Linu
 | Service | Port on Host | Description |
 |---|---|---|
 | **PocketBase** | `18090` | Go backend REST API & Admin UI |
-| **Frontend** | `3000` | Nginx serving compiled Flutter Web SPA |
+| **Frontend** | `18091` | Nginx serving compiled Flutter Web SPA |
 
 ---
 
@@ -26,7 +26,7 @@ cd splitkaro
 docker compose up -d --build
 ```
 
-- **Frontend Web App:** `http://YOUR_SERVER_IP:3000/`
+- **Frontend Web App:** `http://YOUR_SERVER_IP:18091/`
 - **PocketBase Admin:** `http://YOUR_SERVER_IP:18090/_/`
 - **PocketBase REST API:** `http://YOUR_SERVER_IP:18090/api/`
 
@@ -41,7 +41,7 @@ cd ~/splitkaro/frontend
 docker compose up -d --build
 ```
 
-This starts `splitkaro_frontend` on port `3000`.
+This starts `splitkaro_frontend` on port `18091`.
 
 ---
 
