@@ -5,8 +5,10 @@ FROM ghcr.io/cirruslabs/flutter:stable AS builder
 
 WORKDIR /app
 
-# Pre-cache dependencies
-COPY pubspec.yaml pubspec.lock ./
+# Disable telemetry and pre-cache dependencies
+RUN flutter config --no-analytics
+
+COPY pubspec.yaml ./
 RUN flutter pub get
 
 # Copy full frontend source code
