@@ -119,12 +119,13 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -136,7 +137,7 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: cs.outline,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -226,10 +227,10 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.12) : AppTheme.surfaceColor,
+                          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.12) : cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                            color: isSelected ? AppTheme.primaryColor : cs.outline,
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),

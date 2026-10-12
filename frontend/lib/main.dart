@@ -29,6 +29,8 @@ class SplitwiseCloneApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Expense Splitter',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

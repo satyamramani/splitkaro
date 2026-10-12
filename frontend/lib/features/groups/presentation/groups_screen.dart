@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/debt_simplifier.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../expenses/presentation/expense_detail_sheet.dart';
 import '../../expenses/providers/expense_provider.dart';
-import '../models/group.dart';
 import '../providers/group_provider.dart';
 
 class GroupsScreen extends ConsumerWidget {
@@ -100,7 +100,7 @@ class GroupsScreen extends ConsumerWidget {
 
   void _showDirectExpenses(BuildContext context, WidgetRef ref) {
     final currentUser = ref.read(currentUserProvider);
-    final directExpenses = ref.read(expenseProvider).expenses.where((e) => 
+    final directExpenses = ref.read(expenseProvider).expenses.where((e) =>
       e.group.isEmpty && (currentUser.isMe(e.payer) || e.splitOwed.keys.any((p) => currentUser.isMe(p)))
     ).toList();
     final double totalDirectSpend = directExpenses.where((e) => !e.isSettlement).fold(0.0, (sum, e) => sum + e.amount);
@@ -109,96 +109,99 @@ class GroupsScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.15),
-                  child: const Icon(Icons.person_pin_circle_outlined, color: AppTheme.secondaryColor, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Direct / Non-Group Expenses', 
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Total: ${AppConstants.formatCurrency(totalDirectSpend)} • ${directExpenses.length} expenses',
-                        style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12),
-                      ),
-                    ],
+      builder: (ctx) {
+        final cs = Theme.of(context).colorScheme;
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.outline,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Expanded(
-              child: directExpenses.isEmpty
-                  ? const Center(
-                      child: Text('No direct non-group expenses yet', style: TextStyle(color: AppTheme.textSecondaryColor)),
-                    )
-                  : ListView.separated(
-                      itemCount: directExpenses.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final exp = directExpenses[index];
-                        final cat = exp.categoryDetails;
-                        return ListTile(
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            ExpenseDetailSheet.show(context, exp);
-                          },
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: cat.color.withValues(alpha: 0.15),
-                            child: Icon(cat.icon, color: cat.color, size: 18),
-                          ),
-                          title: Text(exp.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          subtitle: Text('Paid by ${exp.payer}'),
-                          trailing: Text(
-                            AppConstants.formatCurrency(exp.amount),
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        );
-                      },
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.15),
+                    child: const Icon(Icons.person_pin_circle_outlined, color: AppTheme.secondaryColor, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Direct / Non-Group Expenses',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Total: ${AppConstants.formatCurrency(totalDirectSpend)} • ${directExpenses.length} expenses',
+                          style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12),
+                        ),
+                      ],
                     ),
-            ),
-            const SizedBox(height: 10),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                context.push('/add-expense');
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Direct Expense'),
-            ),
-          ],
-        ),
-      ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: directExpenses.isEmpty
+                    ? const Center(
+                        child: Text('No direct non-group expenses yet', style: TextStyle(color: AppTheme.textSecondaryColor)),
+                      )
+                    : ListView.separated(
+                        itemCount: directExpenses.length,
+                        separatorBuilder: (context, index) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final exp = directExpenses[index];
+                          final cat = exp.categoryDetails;
+                          return ListTile(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              ExpenseDetailSheet.show(context, exp);
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: cat.color.withValues(alpha: 0.15),
+                              child: Icon(cat.icon, color: cat.color, size: 18),
+                            ),
+                            title: Text(exp.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            subtitle: Text('Paid by ${exp.payer}'),
+                            trailing: Text(
+                              AppConstants.formatCurrency(exp.amount),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/add-expense');
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add Direct Expense'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -208,9 +211,10 @@ class GroupsScreen extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final groups = ref.watch(userGroupsProvider);
     final allExpenses = ref.watch(expenseProvider).expenses;
+    final cs = Theme.of(context).colorScheme;
 
     // Only show direct expenses that involve currentUser
-    final directExpenses = allExpenses.where((e) => 
+    final directExpenses = allExpenses.where((e) =>
       e.group.isEmpty && (currentUser.isMe(e.payer) || e.splitOwed.keys.any((p) => currentUser.isMe(p)))
     ).toList();
     final double totalDirectSpend = directExpenses.where((e) => !e.isSettlement).fold(0.0, (sum, e) => sum + e.amount);
@@ -227,7 +231,10 @@ class GroupsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
-            onPressed: () => ref.read(groupProvider.notifier).refresh(),
+            onPressed: () {
+              ref.read(groupProvider.notifier).refresh();
+              ref.read(expenseProvider.notifier).refresh();
+            },
           ),
         ],
       ),
@@ -239,7 +246,7 @@ class GroupsScreen extends ConsumerWidget {
                 // Direct / Non-Group Expenses Card
                 Card(
                   elevation: 0,
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.06),
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.07),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(color: AppTheme.secondaryColor.withValues(alpha: 0.25)),
@@ -314,9 +321,9 @@ class GroupsScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(28.0),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
+                      color: cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: cs.outline),
                     ),
                     child: Column(
                       children: [
@@ -341,16 +348,41 @@ class GroupsScreen extends ConsumerWidget {
                 else
                   ...groups.map((group) {
                     final groupExpenses = allExpenses.where((e) => e.group == group.name).toList();
-                    final groupTotal = groupExpenses.where((e) => !e.isSettlement).fold(0.0, (sum, e) => sum + e.amount);
+
+                    // Compute simplified debts for this group using all expenses (including settlements)
+                    final rawDebts = <Debt>[];
+                    for (final exp in groupExpenses) {
+                      exp.splitOwed.forEach((person, amountOwed) {
+                        if (person != exp.payer && amountOwed > 0) {
+                          rawDebts.add(Debt(person, exp.payer, amountOwed));
+                        }
+                      });
+                    }
+                    final groupDebts = DebtSimplifier.simplifyDebts(rawDebts);
+
+                    // Net balance from current user's perspective
+                    double myNet = 0.0;
+                    for (final d in groupDebts) {
+                      if (currentUser.isMe(d.debtor)) myNet -= d.amount;
+                      if (currentUser.isMe(d.creditor)) myNet += d.amount;
+                    }
+
+                    final bool isSettled = myNet.abs() < 0.01;
+                    final bool iOwe = myNet < -0.01;
+                    final Color balanceColor = isSettled
+                        ? AppTheme.textSecondaryColor
+                        : iOwe
+                            ? AppTheme.errorColor
+                            : AppTheme.successColor;
+                    final String balanceLabel = isSettled
+                        ? 'All settled'
+                        : iOwe
+                            ? 'You owe ${AppConstants.formatCurrency(myNet.abs())}'
+                            : 'You get back ${AppConstants.formatCurrency(myNet)}';
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
                       child: Card(
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.grey.shade200),
-                        ),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () => context.push('/group-detail/${group.id}', extra: group),
@@ -362,7 +394,7 @@ class GroupsScreen extends ConsumerWidget {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.14),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(Icons.group, color: AppTheme.primaryColor, size: 24),
@@ -392,15 +424,16 @@ class GroupsScreen extends ConsumerWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    const Text('Total spend', style: TextStyle(fontSize: 10, color: AppTheme.textSecondaryColor)),
                                     Text(
-                                      AppConstants.formatCurrency(groupTotal),
-                                      style: const TextStyle(
+                                      balanceLabel,
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: AppTheme.primaryColor,
+                                        fontSize: 13,
+                                        color: balanceColor,
                                       ),
                                     ),
+                                    if (isSettled)
+                                      const Icon(Icons.check_circle_outline, size: 14, color: AppTheme.textSecondaryColor),
                                   ],
                                 ),
                                 const SizedBox(width: 4),
