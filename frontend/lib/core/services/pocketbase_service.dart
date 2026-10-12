@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart';
 
 const String _kCustomUrl = String.fromEnvironment('PB_URL', defaultValue: '');
 
-// PocketBase server URL (LAN / Self-hosted server)
+// PocketBase server URL (HTTPS production domain)
 String get _pbUrl {
   if (_kCustomUrl.isNotEmpty) {
     return _kCustomUrl;
   }
 
-  return 'http://192.168.0.11:18090';
+  return 'https://pocket.chai-tea.duckdns.org';
 }
 
 final pb = PocketBase(_pbUrl);
