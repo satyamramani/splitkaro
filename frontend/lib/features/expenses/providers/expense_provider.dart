@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/expense.dart';
+import '../../groups/providers/group_provider.dart';
 import '../../../core/utils/debt_simplifier.dart';
 import '../../../core/services/pocketbase_service.dart';
 
@@ -94,15 +95,34 @@ final expenseProvider = NotifierProvider<ExpenseNotifier, ExpenseState>(() {
 
 final simplifiedDebtsProvider = Provider<List<Debt>>((ref) {
   final expenseState = ref.watch(expenseProvider);
+  final groups = ref.watch(groupProvider).groups;
   final List<Debt> allDebts = [];
   
-  for (final exp in expenseState.expenses) {
+  // 1. Group debts
+  for (final g in groups) {
+    final gExpenses = expenseState.expenses.where((e) => e.group == g.name).toList();
+    final List<Debt> gRawDebts = [];
+    for (final exp in gExpenses) {
+      exp.splitOwed.forEach((person, amountOwed) {
+        if (person != exp.payer && amountOwed > 0) {
+          gRawDebts.add(Debt(person, exp.payer, amountOwed, group: g.name));
+        }
+      });
+    }
+    allDebts.addAll(DebtSimplifier.simplifyDebts(gRawDebts, group: g.name));
+  }
+
+  // 2. Direct debts (no group)
+  final directExpenses = expenseState.expenses.where((exp) => exp.group.isEmpty).toList();
+  final List<Debt> directRawDebts = [];
+  for (final exp in directExpenses) {
     exp.splitOwed.forEach((person, amountOwed) {
       if (person != exp.payer && amountOwed > 0) {
-        allDebts.add(Debt(person, exp.payer, amountOwed));
+        directRawDebts.add(Debt(person, exp.payer, amountOwed, group: ''));
       }
     });
   }
+  allDebts.addAll(DebtSimplifier.simplifyDebts(directRawDebts, group: ''));
   
-  return DebtSimplifier.simplifyDebts(allDebts);
+  return allDebts;
 });

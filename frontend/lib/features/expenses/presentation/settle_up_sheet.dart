@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/debt_simplifier.dart';
+import '../../groups/providers/group_provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 
@@ -47,6 +49,8 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
   late final TextEditingController _amountController;
   String _paymentMethod = 'UPI';
   bool _isSaving = false;
+  String? _selectedGroup;
+  Map<String, double> _outstandingGroupDebts = {};
 
   final List<Map<String, dynamic>> _methods = [
     {'name': 'UPI', 'icon': Icons.qr_code_2},
@@ -57,9 +61,46 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
   @override
   void initState() {
     super.initState();
+    _selectedGroup = widget.group;
     _amountController = TextEditingController(
-      text: widget.defaultAmount.toStringAsFixed(2),
+      text: widget.defaultAmount > 0.009 ? widget.defaultAmount.toStringAsFixed(2) : '',
     );
+
+    // Compute outstanding debts across groups for this debtor & creditor
+    final allExpenses = ref.read(expenseProvider).expenses;
+    _outstandingGroupDebts = DebtSimplifier.getOutstandingGroupDebts(
+      allExpenses: allExpenses,
+      debtor: widget.debtor,
+      creditor: widget.creditor,
+    );
+
+    if (_selectedGroup == null || _selectedGroup!.isEmpty) {
+      if (_outstandingGroupDebts.length == 1) {
+        // Exactly one group has debt: automatically pick it!
+        _selectedGroup = _outstandingGroupDebts.keys.first;
+        if (widget.defaultAmount <= 0.009) {
+          _amountController.text = _outstandingGroupDebts.values.first.toStringAsFixed(2);
+        }
+      } else if (_outstandingGroupDebts.length > 1) {
+        // Multiple groups have debt: default to '__all__' (auto-split)
+        _selectedGroup = '__all__';
+      } else {
+        // Fallback: check if debtor & creditor share a group
+        final groups = ref.read(groupProvider).groups;
+        final dNorm = widget.debtor.trim().toLowerCase();
+        final cNorm = widget.creditor.trim().toLowerCase();
+        final sharedGroups = groups.where((g) =>
+          g.members.any((m) => m.trim().toLowerCase() == dNorm) &&
+          g.members.any((m) => m.trim().toLowerCase() == cNorm)
+        ).toList();
+
+        if (sharedGroups.length == 1) {
+          _selectedGroup = sharedGroups.first.name;
+        } else {
+          _selectedGroup = ''; // Direct
+        }
+      }
+    }
   }
 
   @override
@@ -82,18 +123,65 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
 
     setState(() => _isSaving = true);
 
-    final settlementExpense = Expense(
-      id: '',
-      description: 'Settled up via $_paymentMethod',
-      amount: amount,
-      payer: widget.debtor,
-      splitOwed: {widget.creditor: amount},
-      group: widget.group ?? '',
-      category: 'settlement',
-      date: DateTime.now(),
-    );
+    bool success = true;
 
-    final success = await ref.read(expenseProvider.notifier).addExpense(settlementExpense);
+    if (_selectedGroup == '__all__') {
+      final allExpenses = ref.read(expenseProvider).expenses;
+      final groupDebts = DebtSimplifier.getOutstandingGroupDebts(
+        allExpenses: allExpenses,
+        debtor: widget.debtor,
+        creditor: widget.creditor,
+      );
+
+      double remaining = amount;
+      for (final entry in groupDebts.entries) {
+        if (remaining <= 0.009) break;
+        final portion = remaining < entry.value ? remaining : entry.value;
+        remaining -= portion;
+
+        final expense = Expense(
+          id: '',
+          description: 'Settled up via $_paymentMethod',
+          amount: portion,
+          payer: widget.debtor,
+          splitOwed: {widget.creditor: portion},
+          group: entry.key,
+          category: 'settlement',
+          date: DateTime.now(),
+        );
+
+        final res = await ref.read(expenseProvider.notifier).addExpense(expense);
+        if (!res) success = false;
+      }
+
+      if (remaining > 0.009) {
+        final expense = Expense(
+          id: '',
+          description: 'Settled up via $_paymentMethod',
+          amount: remaining,
+          payer: widget.debtor,
+          splitOwed: {widget.creditor: remaining},
+          group: groupDebts.isNotEmpty ? groupDebts.keys.first : '',
+          category: 'settlement',
+          date: DateTime.now(),
+        );
+        final res = await ref.read(expenseProvider.notifier).addExpense(expense);
+        if (!res) success = false;
+      }
+    } else {
+      final settlementExpense = Expense(
+        id: '',
+        description: 'Settled up via $_paymentMethod',
+        amount: amount,
+        payer: widget.debtor,
+        splitOwed: {widget.creditor: amount},
+        group: _selectedGroup ?? '',
+        category: 'settlement',
+        date: DateTime.now(),
+      );
+
+      success = await ref.read(expenseProvider.notifier).addExpense(settlementExpense);
+    }
 
     if (mounted) {
       setState(() => _isSaving = false);
@@ -101,7 +189,9 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Settlement of ${AppConstants.formatCurrency(amount)} recorded!'),
+            content: Text(
+              'Settlement of ${AppConstants.formatCurrency(amount)} recorded${_selectedGroup != null && _selectedGroup!.isNotEmpty && _selectedGroup != "__all__" ? " in $_selectedGroup" : ""}!',
+            ),
             backgroundColor: AppTheme.secondaryColor,
           ),
         );
@@ -120,6 +210,99 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final cs = Theme.of(context).colorScheme;
+    final groups = ref.watch(groupProvider).groups;
+    final dNorm = widget.debtor.trim().toLowerCase();
+    final cNorm = widget.creditor.trim().toLowerCase();
+
+    // Groups that either have outstanding debt or share both members
+    final Set<String> groupNames = {};
+    for (final k in _outstandingGroupDebts.keys) {
+      if (k.isNotEmpty) groupNames.add(k);
+    }
+    for (final g in groups) {
+      final isMemberD = g.members.any((m) => m.trim().toLowerCase() == dNorm);
+      final isMemberC = g.members.any((m) => m.trim().toLowerCase() == cNorm);
+      if (isMemberD && isMemberC) {
+        groupNames.add(g.name);
+      }
+    }
+    if (widget.group != null && widget.group!.isNotEmpty) {
+      groupNames.add(widget.group!);
+    }
+
+    final List<DropdownMenuItem<String>> groupItems = [];
+
+    if (_outstandingGroupDebts.length > 1) {
+      groupItems.add(
+        DropdownMenuItem<String>(
+          value: '__all__',
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome, size: 16, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('All Groups (Auto-split)', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              Text(
+                AppConstants.formatCurrency(widget.defaultAmount),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.secondaryColor, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    for (final g in groupNames) {
+      final debtAmount = _outstandingGroupDebts[g];
+      groupItems.add(
+        DropdownMenuItem<String>(
+          value: g,
+          child: Row(
+            children: [
+              const Icon(Icons.group_outlined, size: 16, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(g, style: const TextStyle(fontWeight: FontWeight.w500)),
+              ),
+              if (debtAmount != null && debtAmount > 0.01)
+                Text(
+                  'Owes ${AppConstants.formatCurrency(debtAmount)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.errorColor, fontSize: 11.5),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Direct / Non-group option
+    final directDebt = _outstandingGroupDebts[''];
+    groupItems.add(
+      DropdownMenuItem<String>(
+        value: '',
+        child: Row(
+          children: [
+            const Icon(Icons.person_outline, size: 16, color: AppTheme.textSecondaryColor),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Direct (No group)'),
+            ),
+            if (directDebt != null && directDebt > 0.01)
+              Text(
+                'Owes ${AppConstants.formatCurrency(directDebt)}',
+                style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.errorColor, fontSize: 11.5),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    // Make sure _selectedGroup is valid
+    final bool isSelectedValid = _selectedGroup == '__all__' ||
+        _selectedGroup == '' ||
+        groupNames.contains(_selectedGroup);
+    final effectiveGroup = isSelectedValid ? _selectedGroup : '';
 
     return Container(
       padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
@@ -181,9 +364,41 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
                 ),
               ),
             ),
+            const SizedBox(height: 14),
+
+            // Group Destination Selector
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCardElevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.darkBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: effectiveGroup,
+                  isExpanded: true,
+                  icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primaryColor),
+                  dropdownColor: AppTheme.darkCardElevated,
+                  style: const TextStyle(fontSize: 13, color: AppTheme.textPrimaryColor),
+                  items: groupItems,
+                  onChanged: (val) {
+                    if (val == null) return;
+                    setState(() {
+                      _selectedGroup = val;
+                      if (val == '__all__') {
+                        _amountController.text = widget.defaultAmount.toStringAsFixed(2);
+                      } else if (_outstandingGroupDebts.containsKey(val)) {
+                        _amountController.text = _outstandingGroupDebts[val]!.toStringAsFixed(2);
+                      }
+                    });
+                  },
+                ),
+              ),
+            ),
             const SizedBox(height: 18),
 
-            // Amount field with Rupee symbol (Responsive for mobile)
+            // Amount field with Rupee symbol
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -212,7 +427,7 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Payment mode selector (Clean 3-column on mobile)
+            // Payment mode selector
             const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
             const SizedBox(height: 8),
             Row(
@@ -282,3 +497,4 @@ class _SettleUpSheetState extends ConsumerState<SettleUpSheet> {
     );
   }
 }
+

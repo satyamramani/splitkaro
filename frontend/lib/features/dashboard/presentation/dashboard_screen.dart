@@ -34,7 +34,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final groups = ref.watch(userGroupsProvider);
     final expenseState = ref.watch(expenseProvider);
     final expenses = expenseState.expenses;
-    final simplifiedDebts = ref.watch(simplifiedDebtsProvider);
     final currentUser = ref.watch(currentUserProvider);
     final currentUserName = currentUser.name;
 
@@ -62,16 +61,55 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
     // 2. Debts for this specific group / user scope
-    final List<Debt> activeSimplifiedDebts;
-    final List<Debt> scopeRawDebts = [];
-    for (final exp in scopeExpenses) {
-      exp.splitOwed.forEach((person, amountOwed) {
-        if (person != exp.payer && amountOwed > 0) {
-          scopeRawDebts.add(Debt(person, exp.payer, amountOwed));
+    final List<Debt> activeSimplifiedDebts = [];
+    if (_selectedGroupFilter == null) {
+      // Calculate group debts per group to preserve group affiliation
+      for (final g in groups) {
+        final gExpenses = userInvolvedExpenses.where((exp) => exp.group == g.name).toList();
+        final List<Debt> gRawDebts = [];
+        for (final exp in gExpenses) {
+          exp.splitOwed.forEach((person, amountOwed) {
+            if (person != exp.payer && amountOwed > 0) {
+              gRawDebts.add(Debt(person, exp.payer, amountOwed, group: g.name));
+            }
+          });
         }
-      });
+        activeSimplifiedDebts.addAll(DebtSimplifier.simplifyDebts(gRawDebts, group: g.name));
+      }
+      // Calculate direct debts (empty group)
+      final directExpenses = userInvolvedExpenses.where((exp) => exp.group.isEmpty).toList();
+      final List<Debt> directRawDebts = [];
+      for (final exp in directExpenses) {
+        exp.splitOwed.forEach((person, amountOwed) {
+          if (person != exp.payer && amountOwed > 0) {
+            directRawDebts.add(Debt(person, exp.payer, amountOwed, group: ''));
+          }
+        });
+      }
+      activeSimplifiedDebts.addAll(DebtSimplifier.simplifyDebts(directRawDebts, group: ''));
+    } else if (_selectedGroupFilter == '__direct__') {
+      final directExpenses = userInvolvedExpenses.where((exp) => exp.group.isEmpty).toList();
+      final List<Debt> directRawDebts = [];
+      for (final exp in directExpenses) {
+        exp.splitOwed.forEach((person, amountOwed) {
+          if (person != exp.payer && amountOwed > 0) {
+            directRawDebts.add(Debt(person, exp.payer, amountOwed, group: ''));
+          }
+        });
+      }
+      activeSimplifiedDebts.addAll(DebtSimplifier.simplifyDebts(directRawDebts, group: ''));
+    } else {
+      final gExpenses = userInvolvedExpenses.where((exp) => exp.group == _selectedGroupFilter).toList();
+      final List<Debt> gRawDebts = [];
+      for (final exp in gExpenses) {
+        exp.splitOwed.forEach((person, amountOwed) {
+          if (person != exp.payer && amountOwed > 0) {
+            gRawDebts.add(Debt(person, exp.payer, amountOwed, group: _selectedGroupFilter));
+          }
+        });
+      }
+      activeSimplifiedDebts.addAll(DebtSimplifier.simplifyDebts(gRawDebts, group: _selectedGroupFilter));
     }
-    activeSimplifiedDebts = DebtSimplifier.simplifyDebts(scopeRawDebts);
 
     // 3. Category spending & totals calculation on scopeExpenses
     final Map<String, double> categoryTotals = {};
@@ -438,7 +476,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Column(
                           children: myDebts.map((debt) {
                             final debtorIsMe = isMe(debt.debtor);
-                            final creditorIsMe = isMe(debt.creditor);
                             final otherPerson = debtorIsMe ? debt.creditor : debt.debtor;
 
                             return Padding(
@@ -461,21 +498,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: RichText(
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      text: TextSpan(
-                                        style: const TextStyle(color: AppTheme.textPrimaryColor, fontSize: 13.5),
-                                        children: debtorIsMe
-                                            ? [
-                                                const TextSpan(text: 'You owe ', style: TextStyle(fontWeight: FontWeight.normal)),
-                                                TextSpan(text: otherPerson, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                              ]
-                                            : [
-                                                TextSpan(text: otherPerson, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                const TextSpan(text: ' owes you', style: TextStyle(fontWeight: FontWeight.normal)),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RichText(
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                          text: TextSpan(
+                                            style: const TextStyle(color: AppTheme.textPrimaryColor, fontSize: 13.5),
+                                            children: debtorIsMe
+                                                ? [
+                                                    const TextSpan(text: 'You owe ', style: TextStyle(fontWeight: FontWeight.normal)),
+                                                    TextSpan(text: otherPerson, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                                  ]
+                                                : [
+                                                    TextSpan(text: otherPerson, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                                    const TextSpan(text: ' owes you', style: TextStyle(fontWeight: FontWeight.normal)),
+                                                  ],
+                                          ),
+                                        ),
+                                        if (debt.group != null && debt.group!.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 2.0),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.group_outlined, size: 12, color: AppTheme.primaryColor),
+                                                const SizedBox(width: 3),
+                                                Flexible(
+                                                  child: Text(
+                                                    debt.group!,
+                                                    style: const TextStyle(
+                                                      color: AppTheme.primaryColor,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
                                               ],
-                                      ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -501,7 +566,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                             debtor: debt.debtor,
                                             creditor: debt.creditor,
                                             defaultAmount: debt.amount,
-                                            group: (_selectedGroupFilter != null && _selectedGroupFilter != '__direct__') ? _selectedGroupFilter : null,
+                                            group: (debt.group != null && debt.group!.isNotEmpty)
+                                                ? debt.group
+                                                : ((_selectedGroupFilter != null && _selectedGroupFilter != '__direct__')
+                                                    ? _selectedGroupFilter
+                                                    : null),
                                           );
                                         },
                                         borderRadius: BorderRadius.circular(20),

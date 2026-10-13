@@ -354,11 +354,11 @@ class GroupsScreen extends ConsumerWidget {
                     for (final exp in groupExpenses) {
                       exp.splitOwed.forEach((person, amountOwed) {
                         if (person != exp.payer && amountOwed > 0) {
-                          rawDebts.add(Debt(person, exp.payer, amountOwed));
+                          rawDebts.add(Debt(person, exp.payer, amountOwed, group: group.name));
                         }
                       });
                     }
-                    final groupDebts = DebtSimplifier.simplifyDebts(rawDebts);
+                    final groupDebts = DebtSimplifier.simplifyDebts(rawDebts, group: group.name);
 
                     // Net balance from current user's perspective
                     double myNet = 0.0;

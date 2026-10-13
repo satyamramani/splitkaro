@@ -157,11 +157,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     for (final exp in groupExpenses) {
       exp.splitOwed.forEach((person, amountOwed) {
         if (person != exp.payer && amountOwed > 0) {
-          groupRawDebts.add(Debt(person, exp.payer, amountOwed));
+          groupRawDebts.add(Debt(person, exp.payer, amountOwed, group: group.name));
         }
       });
     }
-    final groupSimplifiedDebts = DebtSimplifier.simplifyDebts(groupRawDebts);
+    final groupSimplifiedDebts = DebtSimplifier.simplifyDebts(groupRawDebts, group: group.name);
 
     // Calculate user's net balance specifically in this group
     double youOweInGroup = 0;
