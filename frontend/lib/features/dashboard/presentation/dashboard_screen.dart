@@ -12,9 +12,9 @@ import '../../expenses/models/expense.dart';
 import '../../expenses/models/expense_category.dart';
 import '../../expenses/presentation/settle_up_sheet.dart';
 import '../../expenses/presentation/expense_detail_sheet.dart';
+import '../../expenses/presentation/widgets/expense_activity_card.dart';
 import '../../expenses/providers/expense_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import 'package:intl/intl.dart';
 import 'main_layout.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -816,15 +816,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     _selectedCategoryFilter != null 
                         ? '${ExpenseCategory.fromId(_selectedCategoryFilter).name} Expenses' 
                         : 'Recent Activity', 
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${filteredExpenses.length} ${_selectedCategoryFilter != null ? "filtered" : "total"}',
-                    style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12),
+                    style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12.5),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               
               // Expenses List with shimmer skeleton loading & mobile-optimized tiles
               if (expenseState.isLoading)
@@ -869,178 +869,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                   return Column(
                     children: [
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: displayedExpenses.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
-                        itemBuilder: (context, index) {
-                          final exp = displayedExpenses[index];
-                          final isPayer = isMe(exp.payer);
-                          final isSettlement = exp.isSettlement;
-                          final category = exp.categoryDetails;
-                          
-                          // User's own share of this expense
-                          double myShare = 0.0;
-                          exp.splitOwed.forEach((key, val) {
-                            if (isMe(key)) myShare += val;
-                          });
-
-                          // Amount lent vs borrowed calculation
-                          final double youLent = isPayer ? (exp.amount - myShare) : 0.0;
-                          final double youBorrowed = !isPayer ? myShare : 0.0;
-                          final bool notInvolved = !isPayer && myShare == 0.0;
-
-                          return Dismissible(
-                            key: Key(exp.id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              color: AppTheme.errorColor,
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            confirmDismiss: (dir) async {
-                              return await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Delete Record?'),
-                                  content: Text('Are you sure you want to delete "${exp.description}"?'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                    FilledButton(
-                                      onPressed: () => Navigator.pop(ctx, true), 
-                                      style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            onDismissed: (_) {
-                              ref.read(expenseProvider.notifier).deleteExpense(exp.id);
-                            },
-                            child: ListTile(
-                              onTap: () => ExpenseDetailSheet.show(context, exp),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-                              leading: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: category.color.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  category.icon, 
-                                  color: category.color,
-                                  size: 22,
-                                ),
-                              ),
-                              title: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      exp.description, 
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                      ...displayedExpenses.map((exp) {
+                        return ExpenseActivityCard(
+                          expense: exp,
+                          isMe: isMe,
+                          showGroupBadge: true,
+                          onTap: () => ExpenseDetailSheet.show(context, exp),
+                          onGroupTap: (groupName) {
+                            setState(() {
+                              _selectedGroupFilter = groupName;
+                              _selectedCategoryFilter = null;
+                            });
+                          },
+                          confirmDismiss: () async {
+                            return await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Record?'),
+                                content: Text('Are you sure you want to delete "${exp.description}"?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(ctx, true), 
+                                    style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
+                                    child: const Text('Delete'),
                                   ),
-                                  if (exp.group.isNotEmpty) ...[
-                                    const SizedBox(width: 4),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedGroupFilter = exp.group;
-                                          _selectedCategoryFilter = null;
-                                        });
-                                      },
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          exp.group,
-                                          style: const TextStyle(fontSize: 10, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                  ]
                                 ],
                               ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: category.color.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        category.name,
-                                        style: TextStyle(fontSize: 10, color: category.color, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        '${isPayer ? "You" : exp.payer} paid ${AppConstants.formatCurrency(exp.amount)} • ${DateFormat('MMM d').format(exp.date)}',
-                                        style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 11.5),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  if (isSettlement) ...[
-                                    const Text('Settled', style: TextStyle(fontSize: 11, color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
-                                    Text(
-                                      AppConstants.formatCurrency(exp.amount),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.secondaryColor),
-                                    ),
-                                  ] else if (isPayer) ...[
-                                    const Text('You lent', style: TextStyle(fontSize: 11, color: AppTheme.secondaryColor, fontWeight: FontWeight.w600)),
-                                    Text(
-                                      '+${AppConstants.formatCurrency(youLent)}', 
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold, 
-                                        fontSize: 14,
-                                        color: AppTheme.secondaryColor,
-                                      ),
-                                    ),
-                                  ] else if (notInvolved) ...[
-                                    const Text('Not involved', style: TextStyle(fontSize: 11, color: AppTheme.textSecondaryColor)),
-                                    Text(
-                                      AppConstants.formatCurrency(0), 
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textSecondaryColor),
-                                    ),
-                                  ] else ...[
-                                    const Text('You borrowed', style: TextStyle(fontSize: 11, color: AppTheme.errorColor, fontWeight: FontWeight.w600)),
-                                    Text(
-                                      '-${AppConstants.formatCurrency(youBorrowed)}', 
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold, 
-                                        fontSize: 14,
-                                        color: AppTheme.errorColor,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                            ) ?? false;
+                          },
+                          onDismissed: () {
+                            ref.read(expenseProvider.notifier).deleteExpense(exp.id);
+                          },
+                        );
+                      }),
                       if (hasMore) ...[
                         const SizedBox(height: 14),
                         Center(

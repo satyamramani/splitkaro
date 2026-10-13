@@ -68,29 +68,35 @@ class ExpenseListSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: List.generate(
-        4,
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
+        3,
+        (index) => Container(
+          margin: const EdgeInsets.only(bottom: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 15.0),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.darkBorder, width: 1),
+          ),
+          child: const Row(
             children: [
-              const ShimmerSkeleton(width: 44, height: 44, borderRadius: 12),
-              const SizedBox(width: 14),
-              const Expanded(
+              ShimmerSkeleton(width: 48, height: 48, borderRadius: 14),
+              SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ShimmerSkeleton(width: 130, height: 15, borderRadius: 6),
-                    SizedBox(height: 7),
-                    ShimmerSkeleton(width: 85, height: 11, borderRadius: 4),
+                    ShimmerSkeleton(width: 140, height: 16, borderRadius: 6),
+                    SizedBox(height: 8),
+                    ShimmerSkeleton(width: 100, height: 12, borderRadius: 4),
                   ],
                 ),
               ),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  ShimmerSkeleton(width: 48, height: 11, borderRadius: 4),
-                  SizedBox(height: 7),
-                  ShimmerSkeleton(width: 58, height: 15, borderRadius: 6),
+                  ShimmerSkeleton(width: 60, height: 16, borderRadius: 6),
+                  SizedBox(height: 8),
+                  ShimmerSkeleton(width: 45, height: 12, borderRadius: 4),
                 ],
               ),
             ],

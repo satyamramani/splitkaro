@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/debt_simplifier.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../expenses/presentation/expense_detail_sheet.dart';
+import '../../expenses/presentation/widgets/expense_activity_card.dart';
 import '../../expenses/providers/expense_provider.dart';
 import '../providers/group_provider.dart';
 
@@ -163,28 +164,18 @@ class GroupsScreen extends ConsumerWidget {
                     ? const Center(
                         child: Text('No direct non-group expenses yet', style: TextStyle(color: AppTheme.textSecondaryColor)),
                       )
-                    : ListView.separated(
+                    : ListView.builder(
                         itemCount: directExpenses.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, color: AppTheme.darkBorderSubtle),
                         itemBuilder: (context, index) {
                           final exp = directExpenses[index];
-                          final cat = exp.categoryDetails;
-                          return ListTile(
+                          return ExpenseActivityCard(
+                            expense: exp,
+                            isMe: (name) => currentUser.isMe(name),
+                            showGroupBadge: false,
                             onTap: () {
                               Navigator.pop(ctx);
                               ExpenseDetailSheet.show(context, exp);
                             },
-                            contentPadding: EdgeInsets.zero,
-                            leading: CircleAvatar(
-                              backgroundColor: cat.color.withValues(alpha: 0.15),
-                              child: Icon(cat.icon, color: cat.color, size: 18),
-                            ),
-                            title: Text(exp.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            subtitle: Text('Paid by ${exp.payer}'),
-                            trailing: Text(
-                              AppConstants.formatCurrency(exp.amount),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
                           );
                         },
                       ),
@@ -381,36 +372,46 @@ class GroupsScreen extends ConsumerWidget {
                             : 'You get back ${AppConstants.formatCurrency(myNet)}';
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 10.0),
+                      padding: const EdgeInsets.only(bottom: 12.0),
                       child: Card(
+                        elevation: 0,
+                        color: AppTheme.darkCard,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(color: AppTheme.darkBorder, width: 1),
+                        ),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () => context.push('/group-detail/${group.id}', extra: group),
                           child: Padding(
-                            padding: const EdgeInsets.all(14.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 44,
-                                  height: 44,
+                                  width: 50,
+                                  height: 50,
                                   decoration: BoxDecoration(
                                     color: AppTheme.primaryColor.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                                      width: 1,
+                                    ),
                                   ),
-                                  child: const Icon(Icons.group, color: AppTheme.primaryColor, size: 24),
+                                  child: const Icon(Icons.group_outlined, color: AppTheme.primaryColor, size: 26),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         group.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
                                       ),
-                                      const SizedBox(height: 3),
+                                      const SizedBox(height: 5),
                                       Text(
                                         '${group.members.length} members • ${groupExpenses.length} expenses',
                                         style: const TextStyle(color: AppTheme.textSecondaryColor, fontSize: 12),
@@ -420,7 +421,7 @@ class GroupsScreen extends ConsumerWidget {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
@@ -428,7 +429,7 @@ class GroupsScreen extends ConsumerWidget {
                                       balanceLabel,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                        fontSize: 14,
                                         color: balanceColor,
                                       ),
                                     ),
